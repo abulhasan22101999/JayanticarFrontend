@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { FaCar } from "react-icons/fa";
 import { FiSearch } from "react-icons/fi";
+import { API_URL } from "../utils/api";
 
 type Car = {
   _id: string;
@@ -22,7 +23,7 @@ const OtherCars = () => {
 
   const fetchCars = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/cars");
+      const res = await fetch(`${API_URL}/cars`);
       const data = await res.json();
 
       const filtered = (data.data || []).filter(

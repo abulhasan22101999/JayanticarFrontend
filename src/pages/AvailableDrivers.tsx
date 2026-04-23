@@ -4,6 +4,7 @@ import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdEdit, MdDelete, MdCheckCircle } from "react-icons/md";
 import toast from "react-hot-toast";
 import AddDriverModal from "../components/AddDriverModal";
+import { API_URL } from "../utils/api";
 
 type Driver = {
   _id: string;
@@ -28,7 +29,7 @@ const AvailableDrivers = () => {
   const fetchDrivers = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/drivers?status=active"
+        `${API_URL}/drivers?status=active`
       );
       const data = await res.json();
       setDrivers(data.data || []);
@@ -50,7 +51,7 @@ const AvailableDrivers = () => {
     if (!confirm("Are you sure?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/drivers/${id}`, {
+      const res = await fetch(`${API_URL}/drivers/${id}`, {
         method: "DELETE",
       });
 

@@ -1,5 +1,6 @@
 import { useState, ChangeEvent } from "react";
 import { FiSearch } from "react-icons/fi";
+import { API_URL } from "../utils/api";
 
 type Car = {
   carNumber: string;
@@ -54,7 +55,7 @@ const GuestPortal = () => {
       setSearched(false);
 
       const res = await fetch(
-        `http://localhost:5000/api/bookings/search?q=${query.trim()}`
+        `${API_URL}/bookings/search?q=${query.trim()}`
       );
 
       const data: ApiResponse = await res.json();

@@ -1,8 +1,8 @@
-
 import { useEffect, useState, ChangeEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type Car = {
   _id: string;
@@ -106,8 +106,8 @@ const AddCarModal = ({ open, setOpen, editCar, setRefresh }: Props) => {
       const isEdit = !!editCar;
 
       const url = isEdit
-        ? `http://localhost:5000/api/cars/${editCar?._id}`
-        : "http://localhost:5000/api/cars";
+        ? `${API_URL}/cars/${editCar?._id}`
+        : `${API_URL}/cars`;
 
       const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",

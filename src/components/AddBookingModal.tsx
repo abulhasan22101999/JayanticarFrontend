@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect,type  ChangeEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
+import { API_URL } from "../utils/api";
 
 // ✅ TYPES
 type Car = {
@@ -186,7 +187,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     }
     const fetchCars = async () => {
       const res = await fetch(
-        `http://localhost:5000/api/cars/search?q=${carSearch}&status=active`,
+        `${API_URL}/cars/search?q=${carSearch}&status=active`,
       );
       const data: ApiResponse<Car[]> = await res.json();
       setCars(data.data.filter((c) => c.status === "active"));
@@ -202,7 +203,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     }
     const fetchDrivers = async () => {
       const res = await fetch(
-        `http://localhost:5000/api/drivers/search?q=${driverSearch}&status=active`,
+        `${API_URL}/drivers/search?q=${driverSearch}&status=active`,
       );
       const data: ApiResponse<Driver[]> = await res.json();
       setDrivers(data.data.filter((d) => d.status === "active"));
@@ -253,8 +254,8 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
 
     try {
       const url = editBooking
-        ? `http://localhost:5000/api/bookings/${editBooking._id}`
-        : "http://localhost:5000/api/bookings";
+        ? `${API_URL}/bookings/${editBooking._id}`
+        : `${API_URL}/bookings`;
 
       const res = await fetch(url, {
         method: editBooking ? "PUT" : "POST",

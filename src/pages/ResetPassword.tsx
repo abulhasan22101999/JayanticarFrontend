@@ -2,6 +2,7 @@
 import { useState, ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type ResetForm = {
   password: string;
@@ -30,7 +31,7 @@ const ResetPassword = () => {
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
+        `${API_URL}/auth/reset-password/${token}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

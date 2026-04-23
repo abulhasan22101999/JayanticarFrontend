@@ -3,6 +3,7 @@ import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 import AddDriverModal from "../components/AddDriverModal";
+import { API_URL } from "../utils/api";
 
 type Driver = {
   _id: string;
@@ -29,7 +30,7 @@ const DriverManagement = () => {
   // ✅ Fetch
   const fetchDrivers = async () => {
     try {
-      let url = "http://localhost:5000/api/drivers";
+      let url = `${API_URL}/drivers`;
       if (statusFilter) url += `?status=${statusFilter}`;
 
       const res = await fetch(url);
@@ -53,7 +54,7 @@ const DriverManagement = () => {
     if (!confirm("Are you sure?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/drivers/${id}`, {
+      const res = await fetch(`${API_URL}/drivers/${id}`, {
         method: "DELETE",
       });
 
@@ -72,7 +73,7 @@ const DriverManagement = () => {
   // const handleToggleStatus = async (id: string) => {
   //   try {
   //     const res = await fetch(
-  //       `http://localhost:5000/api/drivers/toggle/${id}`,
+  //       `${API_URL}/drivers/toggle/${id}`,
   //       { method: "PATCH" },
   //     );
 
@@ -89,7 +90,7 @@ const DriverManagement = () => {
 
   const handleStatusChange = async (id: string, status: string) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/drivers/status/${id}`, {
+    const res = await fetch(`${API_URL}/drivers/status/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

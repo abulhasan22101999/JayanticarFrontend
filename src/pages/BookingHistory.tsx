@@ -1,5 +1,6 @@
 import { useEffect, useState, ChangeEvent } from "react";
 import { FiSearch, FiShare2, FiDownload } from "react-icons/fi";
+import { API_URL } from "../utils/api";
 
 type Car = {
   _id: string;
@@ -41,7 +42,7 @@ const BookingHistory = () => {
 
   const fetchBookings = async (): Promise<void> => {
     try {
-      const res = await fetch("http://localhost:5000/api/bookings");
+      const res = await fetch(`${API_URL}/bookings`);
       const data: ApiResponse = await res.json();
       // 👈 only complete
       const completed = (data.data || []).filter(

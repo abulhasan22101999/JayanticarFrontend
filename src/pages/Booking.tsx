@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from "react";
-import { FiSearch, FiPlus } from "react-icons/fi";
-import { MdEdit, MdDelete } from "react-icons/md";
+import { FiSearch, FiPlus, FiFilter } from "react-icons/fi";
+import { MdEdit, MdDelete, MdCheckCircle, MdCancel } from "react-icons/md";
 import AddBookingModal from "../components/AddBookingModal";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type BookingStatus = "booked" | "complete" | "cancelled";
 
@@ -52,7 +53,7 @@ const Booking = () => {
   const itemsPerPage = 8;
 
   const fetchBookings = async () => {
-    const res = await fetch("http://localhost:5000/api/bookings");
+    const res = await fetch(`${API_URL}/bookings`);
     const data = await res.json();
     const fetched: Booking[] = data.data || [];
 
@@ -63,14 +64,14 @@ const Booking = () => {
     if (toAutoComplete.length > 0) {
       await Promise.all(
         toAutoComplete.map((b) =>
-          fetch(`http://localhost:5000/api/bookings/${b._id}/toggle`, {
+          fetch(`${API_URL}/bookings/${b._id}/toggle`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "complete" }),
           })
         )
       );
-      const res2 = await fetch("http://localhost:5000/api/bookings");
+      const res2 = await fetch(`${API_URL}/bookings`);
       const data2 = await res2.json();
       setBookings(data2.data || []);
     } else {
@@ -89,7 +90,7 @@ const Booking = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this booking?")) return;
-    const res = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+    const res = await fetch(`${API_URL}/bookings/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) return toast.error("Delete failed");
@@ -114,7 +115,7 @@ const Booking = () => {
     }
 
     const res = await fetch(
-      `http://localhost:5000/api/bookings/${id}/toggle`,
+      `${API_URL}/bookings/${id}/toggle`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

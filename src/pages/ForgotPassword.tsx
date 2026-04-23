@@ -1,6 +1,7 @@
 
 import { useState, ChangeEvent } from "react";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type ForgotForm = {
   email: string;
@@ -27,7 +28,7 @@ const ForgotPassword = () => {
       setLoading(true);
 
       const res = await fetch(
-        "http://localhost:5000/api/auth/forgot-password",
+        `${API_URL}/auth/forgot-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
