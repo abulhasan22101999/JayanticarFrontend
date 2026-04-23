@@ -2,6 +2,7 @@ import { useEffect, useState, ChangeEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type Driver = {
   _id: string;
@@ -102,8 +103,8 @@ const AddDriverModal = ({ open, setOpen, editDriver, setRefresh }: Props) => {
       const isEdit = !!editDriver;
 
       const url = isEdit
-        ? `http://localhost:5000/api/drivers/${editDriver?._id}`
-        : "http://localhost:5000/api/drivers";
+        ? `${API_URL}/drivers/${editDriver?._id}`
+        : `${API_URL}/drivers`;
 
       const res = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",

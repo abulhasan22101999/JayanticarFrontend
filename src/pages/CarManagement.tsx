@@ -3,6 +3,7 @@ import { FiSearch, FiPlus } from "react-icons/fi";
 import AddCarModal from "../components/AddCarModal";
 import { MdEdit, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type CarStatus = "active" | "inactive" | "booked";
 
@@ -29,7 +30,7 @@ const CarManagement = () => {
   // ✅ Fetch Cars
   const fetchCars = async () => {
     try {
-      let url = "http://localhost:5000/api/cars";
+      let url = `${API_URL}/cars`;
       if (statusFilter) {
         url += `?status=${statusFilter}`;
       }
@@ -55,7 +56,7 @@ const CarManagement = () => {
     if (!confirm("Are you sure?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/cars/${id}`, {
+      const res = await fetch(`${API_URL}/cars/${id}`, {
         method: "DELETE",
       });
 
@@ -103,7 +104,7 @@ const CarManagement = () => {
   // ) => {
   //   try {
   //     const res = await fetch(
-  //       `http://localhost:5000/api/cars/status/${id}`,
+  //       `${API_URL}/cars/status/${id}`,
   //       {
   //         method: "PATCH",
   //         headers: {
@@ -133,7 +134,7 @@ const CarManagement = () => {
 
   const handleCarStatusChange = async (id: string, status: CarStatus) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/cars/status/${id}`, {
+    const res = await fetch(`${API_URL}/cars/status/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

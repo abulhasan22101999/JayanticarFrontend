@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { FiSearch } from "react-icons/fi";
 import { MdEventBusy } from "react-icons/md";
 import toast from "react-hot-toast";
+import { API_URL } from "../utils/api";
 
 type Driver = {
   _id: string;
@@ -19,7 +20,7 @@ const BookedDrivers = () => {
   const fetchDrivers = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/drivers?status=booked"
+        `${API_URL}/drivers?status=booked`
       );
       const data = await res.json();
       setDrivers(data.data || []);

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../utils/api";
 
 // ✅ ICONS (UPDATED)
 import { FaUserTie } from "react-icons/fa";
 
 import {
   MdEventBusy,
-  MdCheckCircle,
   // MdToday,
   MdDirectionsCar,
 } from "react-icons/md";
 
-import { BsFillCarFrontFill } from "react-icons/bs";
+
 // import BookingManagement from "./BookingManagement";
 import Booking from "./Booking";
 
@@ -55,9 +55,9 @@ const Dashboard = () => {
   const fetchStats = async () => {
     try {
       const [carRes, driverRes, bookingRes] = await Promise.all([
-        fetch("http://localhost:5000/api/cars"),
-        fetch("http://localhost:5000/api/drivers"),
-        fetch("http://localhost:5000/api/bookings"),
+        fetch(`${API_URL}/cars`),
+        fetch(`${API_URL}/drivers`),
+        fetch(`${API_URL}/bookings`),
       ]);
 
       const carData = await carRes.json();
