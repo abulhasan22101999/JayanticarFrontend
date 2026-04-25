@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
-import { FiSearch, FiPlus, FiFilter } from "react-icons/fi";
-import { MdEdit, MdDelete, MdCheckCircle, MdCancel } from "react-icons/md";
+import { FiSearch, FiPlus } from "react-icons/fi";
+import { MdEdit, MdDelete } from "react-icons/md";
 import AddBookingModal from "../components/AddBookingModal";
 import toast from "react-hot-toast";
 import { API_URL } from "../utils/api";
@@ -27,6 +27,8 @@ type Booking = {
   pickupLocation: string;
   dropLocation: string;
   status: BookingStatus;
+  reportingAddress?: string;
+  reportingTime?: string;
 };
 
 const isDropDatePassed = (dropDate: string): boolean => {

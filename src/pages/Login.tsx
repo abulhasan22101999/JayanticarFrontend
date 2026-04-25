@@ -1,5 +1,6 @@
 
-import { useState, ChangeEvent, KeyboardEvent } from "react";
+import { useState } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
 import { loginUser } from "../services/auth";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";

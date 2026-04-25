@@ -1,4 +1,4 @@
-import { useState, useEffect,type  ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -13,15 +13,15 @@ type Car = {
   _id: string;
   carNumber: string;
   carName: string;
-  carModel: string;
-  status: string;
+  carModel?: string;
+  status?: string;
 };
 
 type Driver = {
   _id: string;
   driverName: string;
-  mobileNo: string;
-  status: string;
+  mobileNo?: string;
+  status?: string;
 };
 
 type ApiResponse<T> = {

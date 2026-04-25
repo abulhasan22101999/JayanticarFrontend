@@ -1,4 +1,4 @@
-import { useEffect, useState, ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";

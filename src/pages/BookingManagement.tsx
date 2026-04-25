@@ -26,6 +26,8 @@ type Booking = {
   pickupLocation: string;
   dropLocation: string;
   status: BookingStatus;
+  reportingAddress?: string;
+  reportingTime?: string;
 };
 
 const isDropDatePassed = (dropDate: string): boolean => {

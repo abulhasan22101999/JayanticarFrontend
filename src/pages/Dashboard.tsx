@@ -28,7 +28,7 @@ type Driver = {
   status: "active" | "booked";
 };
 
-type Booking = {
+type BookingType = {
   _id: string;
   pickupDate: string;
   createdAt: string; // 🔥 add this
@@ -66,7 +66,7 @@ const Dashboard = () => {
 
       const cars: Car[] = carData.data || [];
       const drivers: Driver[] = driverData.data || [];
-      const bookings: Booking[] = bookingData.data || [];
+      const bookings: BookingType[] = bookingData.data || [];
 
       // 🔥 CAR STATS
       const totalCars = cars.length;
@@ -86,7 +86,7 @@ const Dashboard = () => {
       const today = new Date().toLocaleDateString("en-CA");
 
       const todayBookings = bookings.filter(
-        (b: Booking) => b.createdAt.slice(0, 10) === today,
+        (b: BookingType) => b.createdAt.slice(0, 10) === today,
       ).length;
 
       setStats({

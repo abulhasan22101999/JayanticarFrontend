@@ -5,7 +5,6 @@ import {
  
   MdDirectionsCar,
   MdBookOnline,
-  MdEventAvailable,
   MdHistory,
  
   MdPersonSearch,
