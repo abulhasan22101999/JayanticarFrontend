@@ -1,4 +1,4 @@
-import { useEffect, useState, ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { MdSave } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -52,20 +52,6 @@ const AddDriverModal = ({ open, setOpen, editDriver, setRefresh }: Props) => {
   }, [editDriver, open]);
 
   if (!open) return null;
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-    }));
-  };
 
   // 🔥 VALIDATION FUNCTION
   const validate = () => {

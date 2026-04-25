@@ -1,4 +1,5 @@
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
 import { FiSearch } from "react-icons/fi";
 import { API_URL } from "../utils/api";
 
@@ -68,7 +69,7 @@ const GuestPortal = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") handleSearch();
   };
 

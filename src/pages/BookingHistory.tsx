@@ -1,5 +1,6 @@
-import { useEffect, useState, ChangeEvent } from "react";
-import { FiSearch, FiShare2, FiDownload } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import type { ChangeEvent } from "react";
+import { FiSearch, FiDownload } from "react-icons/fi";
 import { API_URL } from "../utils/api";
 
 type Car = {
@@ -76,27 +77,6 @@ const BookingHistory = () => {
 
     return matchSearch && matchFrom && matchTo;
   });
-
-  // ✅ SINGLE BOOKING SHARE
-  const handleShareSingle = async (b: Booking) => {
-    const text = `📋 Booking ID: ${b.bookingId}
-🚗 Car: ${b.carId?.carName ?? "N/A"} | ${b.carId?.carNumber ?? "N/A"}
-👤 Driver: ${b.driverId?.driverName ?? "N/A"}
-🧑 Guest: ${b.guestName}
-📞 Mobile: ${b.guestMobileNo}
-🏢 Company: ${b.company || "—"}
-📍 Pickup: ${b.pickupLocation}
-📍 Drop: ${b.dropLocation}
-📅 Date: ${b.pickupDate?.slice(0, 10)} → ${b.dropDate ? b.dropDate.slice(0, 10) : "—"}
-🔖 Status: ${b.status}`;
-
-    if (navigator.share) {
-      await navigator.share({ title: "Booking Details", text });
-    } else {
-      await navigator.clipboard.writeText(text);
-      alert("Copied! Paste in WhatsApp or Email.");
-    }
-  };
 
   // ✅ DOWNLOAD CSV
   const handleDownload = () => {
