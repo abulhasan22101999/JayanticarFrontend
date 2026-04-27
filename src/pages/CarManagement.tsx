@@ -130,33 +130,31 @@ const CarManagement = () => {
   //   }
   // };
 
-
-
   const handleCarStatusChange = async (id: string, status: CarStatus) => {
-  try {
-    const res = await fetch(`${API_URL}/cars/status/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    try {
+      const res = await fetch(`${API_URL}/cars/status/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    // 🔥 booked হলে error toast দেখাবে, status change হবে না
-    if (!res.ok) {
-      toast.error(data.message);
-      return;
+      // 🔥 booked হলে error toast দেখাবে, status change হবে না
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+
+      toast.success("Car status updated");
+
+      setCars((prev) =>
+        prev.map((item) => (item._id === id ? { ...item, status } : item)),
+      );
+    } catch {
+      toast.error("Status update failed");
     }
-
-    toast.success("Car status updated");
-
-    setCars((prev) =>
-      prev.map((item) => item._id === id ? { ...item, status } : item)
-    );
-  } catch {
-    toast.error("Status update failed");
-  }
-};
+  };
 
   return (
     <div>
@@ -194,7 +192,7 @@ const CarManagement = () => {
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
-          <option value="booked">Booked</option>
+          <option value="booked">Blocked</option>
         </select>
       </div>
 
@@ -205,8 +203,8 @@ const CarManagement = () => {
             <thead className="bg-gray-50 text-gray-500 text-xs">
               <tr>
                 <th className="p-4 text-left">CAR NAME</th>
-                <th className="p-4 text-left">CAR MODEL</th> 
-                 <th className="p-4 text-left">CAR NUMBER</th>
+                <th className="p-4 text-left">CAR MODEL</th>
+                <th className="p-4 text-left">CAR NUMBER</th>
                 <th className="p-4 text-left">OWNERSHIP</th>
                 <th className="p-4 text-left">STATUS</th>
                 <th className="p-4 text-left">ACTIONS</th>
@@ -215,52 +213,66 @@ const CarManagement = () => {
 
             <tbody>
               {paginatedCars.map((car) => (
-                <tr key={car._id} className="border-t border-gray-200 hover:bg-gray-50">
+                <tr
+                  key={car._id}
+                  className="border-t border-gray-200 hover:bg-gray-50"
+                >
                   <td className="p-3">{car.carName}</td>
-                   <td className="p-3">{car.carModel}</td>
+                  <td className="p-3">{car.carModel}</td>
                   <td className="p-3">{car.carNumber}</td>
-                 
-                  
+
                   <td className="p-3 capitalize">{car.ownership}</td>
 
                   {/* STATUS (NO DESIGN CHANGE) */}
-                  <td className="p-3">
-                    <select
-                      value={car.status}
-                      onChange={(e) =>
-                        handleCarStatusChange(
-                          car._id,
-                          e.target.value as CarStatus,
-                        )
-                      }
-                      className={`px-3 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer ${
-                        car.status === "active"
-                          ? "bg-green-100 text-green-600"
-                          : car.status === "inactive"
-                            ? "bg-gray-200 text-gray-600"
-                            : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      <option value="active">active</option>
-                      <option value="inactive">inactive</option>
-                      <option value="booked">booked</option>
-                    </select>
-                  </td>
-
+                 <td className="p-3">
+  {car.status === "booked" ? (
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-gray-200">
+      blocked
+    </span>
+  ) : (
+    <div className="relative inline-flex items-center">
+      <select
+        value={car.status}
+        onChange={(e) =>
+          handleCarStatusChange(car._id, e.target.value as CarStatus)
+        }
+        className={`pl-2 pr-4 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer appearance-none ${
+          car.status === "active"
+            ? "bg-green-100 text-green-600"
+            : "bg-gray-200 text-gray-600"
+        }`}
+      >
+        <option value="active">active</option>
+        <option value="inactive">inactive</option>
+      </select>
+      <span className="pointer-events-none absolute right-2 text-[14px]">▾</span>
+    </div>
+  )}
+</td>
                   <td className="p-3 flex gap-2">
                     <button
                       onClick={() => {
                         setEditCar(car);
                         setOpen(true);
                       }}
-                      className="border p-2 rounded-lg"
+                      disabled={car.status === "booked"}
+                      className={`border p-2 rounded-lg ${
+                        car.status === "booked"
+                          ? "opacity-30 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
                     >
                       <MdEdit size={18} />
                     </button>
 
                     <button
                       onClick={() => handleDelete(car._id)}
-                      className="border p-2 rounded-lg text-red-500"
+                      disabled={car.status === "booked"}
+                      className={`border p-2 rounded-lg text-red-500 ${
+                        car.status === "booked"
+                          ? "opacity-30 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
                     >
                       <MdDelete size={18} />
                     </button>

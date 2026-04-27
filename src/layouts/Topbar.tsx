@@ -1,5 +1,3 @@
-
-
 import { FiLogOut } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -11,54 +9,42 @@ type Props = {
 const Topbar = ({ setMobileOpen }: Props) => {
   const navigate = useNavigate();
 
-  // ✅ LOGOUT FUNCTION
   const handleLogout = () => {
-    // remove token
     localStorage.removeItem("token");
-
     toast.success("Logged out successfully");
-
-    // redirect to login page
     navigate("/login");
   };
 
   return (
-    <div className="h-[70px] flex items-center px-4 md:px-6 border-b border-gray-200 bg-white">
-      
+    <div className="h-[60px] sm:h-[70px] flex items-center px-3 sm:px-4 md:px-6 border-b border-gray-200 bg-white">
+
       {/* Mobile Hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden p-2 border border-gray-200 rounded mr-3"
+        className="lg:hidden p-2 border border-gray-200 rounded-md mr-2 sm:mr-3 active:scale-95 transition"
       >
         ☰
       </button>
 
-      <h1 className="text-lg font-bold flex-1">Dashboard</h1>
+      {/* Title */}
+      <h1 className="text-base sm:text-lg md:text-xl font-semibold flex-1 truncate">
+        Dashboard
+      </h1>
 
-      <div className="flex items-center gap-2 md:gap-3">
-        
-        {/* 🔥 SEARCH BAR */}
-        {/* <div
-          className="hidden md:flex items-center border border-gray-200 rounded-lg px-3 
-          transition-all duration-300 
-          focus-within:border-red-500 focus-within:w-[260px] 
-          w-[200px] bg-gray-50"
-        >
-          <FiSearch className="text-gray-400 mr-2" />
+      {/* Right Section */}
+      <div className="flex items-center gap-2 sm:gap-3">
 
-          <input
-            type="text"
-            placeholder="Search anything..."
-            className="bg-transparent outline-none w-full text-sm py-2"
-          />
-        </div> */}
-
-        {/* 🔥 LOGOUT BUTTON (replaced notification) */}
+        {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="p-2 border border-gray-200 rounded-lg hover:bg-red-50 transition"
+          className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-200 rounded-lg hover:bg-red-50 active:scale-95 transition"
         >
-          <FiLogOut className="text-red-500" />
+          <FiLogOut className="text-red-500 text-sm sm:text-base" />
+
+          {/* Hide text in mobile */}
+          <span className="hidden sm:block text-sm text-red-500">
+            Logout
+          </span>
         </button>
       </div>
     </div>

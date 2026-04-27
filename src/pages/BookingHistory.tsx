@@ -40,16 +40,21 @@ const BookingHistory = () => {
   const [search, setSearch] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchBookings = async (): Promise<void> => {
     try {
       const res = await fetch(`${API_URL}/bookings`);
       const data: ApiResponse = await res.json();
-      // 👈 only complete
-      const completed = (data.data || []).filter(
-        (b: Booking) => b.status === "complete"
-      );
-      setBookings(completed);
+      // const completed = (data.data || []).filter(
+      //   (b: Booking) => b.status === "complete"
+      // );
+
+      setBookings(data.data || []);
+
+      // setBookings(data.data || []);
+      // setBookings(completed);
     } catch (error) {
       console.error("Fetch error:", error);
     }
@@ -58,6 +63,10 @@ const BookingHistory = () => {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, fromDate, toDate]);
 
   const filteredBookings: Booking[] = bookings.filter((b) => {
     const searchText = search.toLowerCase();
@@ -78,7 +87,13 @@ const BookingHistory = () => {
     return matchSearch && matchFrom && matchTo;
   });
 
-  // ✅ DOWNLOAD CSV
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
+
+  const paginatedBookings = filteredBookings.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleDownload = () => {
     const headers = [
       "Booking ID",
@@ -156,7 +171,6 @@ const BookingHistory = () => {
           />
         </div>
 
-        {/* FROM DATE WITH CLEAR */}
         <div className="relative flex items-center">
           <input
             type="date"
@@ -176,7 +190,6 @@ const BookingHistory = () => {
           )}
         </div>
 
-        {/* TO DATE WITH CLEAR */}
         <div className="relative flex items-center">
           <input
             type="date"
@@ -198,7 +211,7 @@ const BookingHistory = () => {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border border-gray-200 overflow-hidden rounded-b-xl">
+      <div className="bg-white border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[1000px]">
             <thead className="bg-gray-50 text-xs text-left">
@@ -213,19 +226,19 @@ const BookingHistory = () => {
                 <th className="p-3">DROP</th>
                 <th className="p-3">COMPANY</th>
                 <th className="p-3">DATES</th>
-                {/* <th className="p-3">SHARE</th> */}
+                <th className="p-3">STATUS</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredBookings.length === 0 ? (
+              {paginatedBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="text-center p-6 text-gray-400">
+                  <td colSpan={10} className="text-center p-6 text-gray-400">
                     No completed bookings found
                   </td>
                 </tr>
               ) : (
-                filteredBookings.map((b) => (
+                paginatedBookings.map((b) => (
                   <tr
                     key={b._id}
                     className="border-t border-gray-200 hover:bg-gray-50"
@@ -243,14 +256,19 @@ const BookingHistory = () => {
                       {b.pickupDate?.slice(0, 10)} →{" "}
                       {b.dropDate ? b.dropDate.slice(0, 10) : "—"}
                     </td>
-                    {/* <td className="p-3">
-                      <button
-                        onClick={() => handleShareSingle(b)}
-                        className="flex items-center gap-1 border border-gray-200 px-2 py-1 rounded text-xs bg-blue-50 text-blue-400"
-                      >
-                        <FiShare2 size={12} /> Share
-                      </button>
-                    </td> */}
+                    <td className="p-3">
+  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+    b.status === "complete"
+      ? "bg-green-100 text-green-600"
+      : b.status === "booked"
+      ? "bg-yellow-100 text-yellow-700"
+      : b.status === "cancelled"
+      ? "bg-red-100 text-red-500"
+      : "bg-gray-100 text-gray-500"
+  }`}>
+    {b.status}
+  </span>
+</td>
                   </tr>
                 ))
               )}
@@ -258,6 +276,33 @@ const BookingHistory = () => {
           </table>
         </div>
       </div>
+
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-3 py-4 bg-white border border-t-0 border-gray-200 rounded-b-xl">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

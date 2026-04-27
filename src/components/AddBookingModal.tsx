@@ -30,15 +30,23 @@ type ApiResponse<T> = {
 
 type Booking = {
   _id: string;
-  carId: string | Car;
-  driverId: string | Driver;
+  carId: {
+    _id: string;
+    carNumber: string;
+    carName: string;
+  } | null;
+  driverId: {
+    _id: string;
+    driverName: string;
+  } | null;
   pickupDate: string;
   dropDate: string;
-  pickupLocation: string;
-  dropLocation: string;
   guestName: string;
   guestMobileNo: string;
-  company?: string;
+  company: string;
+  pickupLocation: string;
+  dropLocation: string;
+  status: BookingStatus;
   reportingAddress?: string;
   reportingTime?: string;
 };
@@ -126,40 +134,45 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     setDrivers([]);
   };
 
-  useEffect(() => {
-    if (editBooking) {
-      setForm({
-        carId:
-          typeof editBooking.carId === "object"
-            ? editBooking.carId._id
-            : editBooking.carId,
-        driverId:
-          typeof editBooking.driverId === "object"
-            ? editBooking.driverId._id
-            : editBooking.driverId,
-        pickupDate: editBooking.pickupDate.slice(0, 10),
-        dropDate: editBooking.dropDate ? editBooking.dropDate.slice(0, 10) : "",
-        pickupLocation: editBooking.pickupLocation,
-        dropLocation: editBooking.dropLocation,
-        guestName: editBooking.guestName,
-        guestMobileNo: editBooking.guestMobileNo,
-        company: editBooking.company || "",
-        reportingAddress: editBooking.reportingAddress || "",
-        reportingTime: editBooking.reportingTime || "",
-      });
+ useEffect(() => {
+  if (editBooking) {
+    setForm({
+      carId:
+        editBooking.carId && typeof editBooking.carId === "object"
+          ? editBooking.carId._id
+          : (editBooking.carId as string) || "",
+      driverId:
+        editBooking.driverId && typeof editBooking.driverId === "object"
+          ? editBooking.driverId._id
+          : (editBooking.driverId as string) || "",
+      pickupDate: editBooking.pickupDate.slice(0, 10),
+      dropDate: editBooking.dropDate ? editBooking.dropDate.slice(0, 10) : "",
+      pickupLocation: editBooking.pickupLocation,
+      dropLocation: editBooking.dropLocation,
+      guestName: editBooking.guestName,
+      guestMobileNo: editBooking.guestMobileNo,
+      company: editBooking.company || "",
+      reportingAddress: editBooking.reportingAddress || "",
+      reportingTime: editBooking.reportingTime || "",
+    });
 
-      if (typeof editBooking.carId === "object") {
-        setSelectedCar(
-          `${editBooking.carId.carNumber} (${editBooking.carId.carModel}) (${editBooking.carId.carName})`,
-        );
-      }
-      if (typeof editBooking.driverId === "object") {
-        setSelectedDriver(
-          `${editBooking.driverId.driverName} (${editBooking.driverId.mobileNo})`,
-        );
-      }
+    if (editBooking.carId && typeof editBooking.carId === "object") {
+      setSelectedCar(
+        `${editBooking.carId.carName} | ${editBooking.carId.carModel ?? ""} | ${editBooking.carId.carNumber}`,
+      );
+    } else {
+      setSelectedCar("");
     }
-  }, [editBooking]);
+
+    if (editBooking.driverId && typeof editBooking.driverId === "object") {
+      setSelectedDriver(
+        `${editBooking.driverId.driverName} (${editBooking.driverId.mobileNo ?? ""})`,
+      );
+    } else {
+      setSelectedDriver("");
+    }
+  }
+}, [editBooking]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -214,8 +227,8 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.carId) newErrors.carId = "Please select a car";
-    if (!form.driverId) newErrors.driverId = "Please select a driver";
+    // if (!form.carId) newErrors.carId = "Please select a car";
+    // if (!form.driverId) newErrors.driverId = "Please select a driver";
     if (!form.pickupDate) newErrors.pickupDate = "Pickup date is required";
 
     // ✅ Drop date is now MANDATORY
@@ -246,33 +259,39 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validate()) {
-      toast.error("Please fill data");
-      return;
-    }
+ const handleSubmit = async () => {
+  if (!validate()) {
+    toast.error("Please fill data");
+    return;
+  }
 
-    try {
-      const url = editBooking
-        ? `${API_URL}/bookings/${editBooking._id}`
-        : `${API_URL}/bookings`;
+  try {
+    const url = editBooking
+      ? `${API_URL}/bookings/${editBooking._id}`
+      : `${API_URL}/bookings`;
 
-      const res = await fetch(url, {
-        method: editBooking ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const payload = {
+      ...form,
+      carId: form.carId || null,
+      driverId: form.driverId || null,
+    };
 
-      if (!res.ok) return toast.error("Error saving booking");
+    const res = await fetch(url, {
+      method: editBooking ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      toast.success("Booking saved successfully");
-      resetForm();
-      setOpen(false);
-      setRefresh((p) => !p);
-    } catch {
-      toast.error("Server error");
-    }
-  };
+    if (!res.ok) return toast.error("Error saving booking");
+
+    toast.success("Booking saved successfully");
+    resetForm();
+    setOpen(false);
+    setRefresh((p) => !p);
+  } catch {
+    toast.error("Server error");
+  }
+};
 
   if (!open) return null;
 
@@ -280,8 +299,8 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     errors[field] ? "border-red-400" : "border-gray-200";
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
-      <div className="bg-white w-full max-w-lg rounded-xl p-6">
+    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4 md:mx-0">
+      <div className="bg-white w-full max-w-lg rounded-xl md:p-6 p-3">
         <div className="flex justify-between mb-4">
           <h2 className="font-semibold text-lg">
             {editBooking ? "Edit Booking" : "Add Booking"}
@@ -295,7 +314,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:gap-3 gap-2">
           {/* PICKUP DATE */}
           <div>
             <div className={`border p-2 rounded-lg ${errClass("pickupDate")}`}>
@@ -363,7 +382,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
                 if (errors.carId)
                   setErrors((prev) => ({ ...prev, carId: undefined }));
               }}
-              className={`border p-2 rounded-lg w-full ${errClass("carId")}`}
+              className={`border p-2 rounded-lg w-full border-gray-200`}
             />
             {errors.carId && (
               <p className="text-red-500 text-xs mt-1">{errors.carId}</p>
@@ -402,7 +421,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
                 if (errors.driverId)
                   setErrors((prev) => ({ ...prev, driverId: undefined }));
               }}
-              className={`border p-2 rounded-lg w-full ${errClass("driverId")}`}
+              className={`border p-2 rounded-lg w-full border-gray-200`}
             />
             {errors.driverId && (
               <p className="text-red-500 text-xs mt-1">{errors.driverId}</p>

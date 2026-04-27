@@ -13,8 +13,6 @@ type Driver = {
   status: "active" | "inactive" | "booked";
 };
 
-
-
 const DriverManagement = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [search, setSearch] = useState("");
@@ -69,50 +67,37 @@ const DriverManagement = () => {
     }
   };
 
-  // ✅ Toggle
-  // const handleToggleStatus = async (id: string) => {
-  //   try {
-  //     const res = await fetch(
-  //       `${API_URL}/drivers/toggle/${id}`,
-  //       { method: "PATCH" },
-  //     );
-
-  //     const data = await res.json();
-
-  //     if (!res.ok) return toast.error(data.message);
-
-  //     toast.success("Status updated");
-  //     setRefresh((prev) => !prev);
-  //   } catch {
-  //     toast.error("Toggle failed");
-  //   }
-  // };
+  
 
   const handleStatusChange = async (id: string, status: string) => {
-  try {
-    const res = await fetch(`${API_URL}/drivers/status/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    try {
+      const res = await fetch(`${API_URL}/drivers/status/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    // 🔥 booked হলে error toast, status change হবে না
-    if (!res.ok) {
-      toast.error(data.message);
-      return;
+      // 🔥 booked হলে error toast, status change হবে না
+      if (!res.ok) {
+        toast.error(data.message);
+        return;
+      }
+
+      toast.success("Status updated");
+
+      setDrivers((prev) =>
+        prev.map((item) =>
+          item._id === id
+            ? { ...item, status: status as Driver["status"] }
+            : item,
+        ),
+      );
+    } catch {
+      toast.error("Status update failed");
     }
-
-    toast.success("Status updated");
-
-    setDrivers((prev) =>
-      prev.map((item) => item._id === id ? { ...item, status: status as Driver["status"] } : item)
-    );
-  } catch {
-    toast.error("Status update failed");
-  }
-};
+  };
 
   const filtered = drivers.filter((d) =>
     d.driverName.toLowerCase().includes(search.toLowerCase()),
@@ -184,45 +169,38 @@ const DriverManagement = () => {
 
             <tbody>
               {paginated.map((d) => (
-                <tr key={d._id} className="border-t border-gray-200 hover:bg-gray-50">
+                <tr
+                  key={d._id}
+                  className="border-t border-gray-200 hover:bg-gray-50"
+                >
                   <td className="p-3">{d.driverName}</td>
                   <td className="p-3">{d.mobileNo}</td>
                   <td className="p-3">{d.alternateMobileNo || "-"}</td>
 
-                  {/* <td className="p-3">
-                    <span
-                      onClick={() => handleToggleStatus(d._id)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition ${
-                        d.status === "active"
-                          ? "bg-green-100 text-green-600"
-                          : d.status === "inactive"
-                            ? "bg-gray-200 text-gray-600"
-                            : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {d.status}
-                    </span>
-                  </td> */}
-
+                  
                   <td className="p-3">
-                    <select
-                      value={d.status}
-                      onChange={(e) =>
-                        handleStatusChange(d._id, e.target.value)
-                      }
-                      className={`px-3 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer ${
-                        d.status === "active"
-                          ? "bg-green-100 text-green-600"
-                          : d.status === "inactive"
-                            ? "bg-gray-200 text-gray-600"
-                            : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      <option value="active">active</option>
-                      <option value="inactive">inactive</option>
-                      <option value="booked">booked</option>
-                    </select>
-                  </td>
+  {d.status === "booked" ? (
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-gray-200">
+      blocked
+    </span>
+  ) : (
+    <div className="relative inline-flex items-center">
+      <select
+        value={d.status}
+        onChange={(e) => handleStatusChange(d._id, e.target.value)}
+        className={`pl-2 pr-4 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer appearance-none ${
+          d.status === "active"
+            ? "bg-green-100 text-green-600"
+            : "bg-gray-200 text-gray-600"
+        }`}
+      >
+        <option value="active">active</option>
+        <option value="inactive">inactive</option>
+      </select>
+      <span className="pointer-events-none absolute right-2 text-[14px]">▾</span>
+    </div>
+  )}
+</td>
 
                   <td className="p-3 flex gap-2">
                     <button
@@ -230,14 +208,24 @@ const DriverManagement = () => {
                         setEditDriver(d);
                         setOpen(true);
                       }}
-                      className="border border-gray-200 p-2 rounded-lg"
+                      disabled={d.status === "booked"}
+                      className={`border border-gray-200 p-2 rounded-lg ${
+                        d.status === "booked"
+                          ? "opacity-30 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
                     >
                       <MdEdit size={18} />
                     </button>
 
                     <button
                       onClick={() => handleDelete(d._id)}
-                      className="border border-gray-200 p-2 rounded-lg text-red-500"
+                      disabled={d.status === "booked"}
+                      className={`border border-gray-200 p-2 rounded-lg text-red-500 ${
+                        d.status === "booked"
+                          ? "opacity-30 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
                     >
                       <MdDelete size={18} />
                     </button>

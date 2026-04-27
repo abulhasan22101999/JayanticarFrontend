@@ -116,7 +116,7 @@ const AddDriverModal = ({ open, setOpen, editDriver, setRefresh }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] px-4 md:px-4">
       <div className="bg-white w-full max-w-lg rounded-xl shadow-lg">
         <div className="flex justify-between items-center pt-6 pb-3 px-6">
           <h2 className="font-semibold text-lg">
@@ -132,7 +132,7 @@ const AddDriverModal = ({ open, setOpen, editDriver, setRefresh }: Props) => {
         </div>
 
         {/* FORM */}
-        <div className="py-4 px-6 grid grid-cols-2 gap-4 text-gray-700">
+        <div className="py-4 md:px-6 px-3 grid grid-cols-2 md:gap-4 gap-2 text-gray-700">
           {/* NAME */}
           <div>
             <label>Driver Name</label>

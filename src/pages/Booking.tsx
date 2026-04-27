@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdEdit, MdDelete } from "react-icons/md";
@@ -14,11 +13,11 @@ type Booking = {
     _id: string;
     carNumber: string;
     carName: string;
-  };
+  } | null;
   driverId: {
     _id: string;
     driverName: string;
-  };
+  } | null;
   pickupDate: string;
   dropDate: string;
   guestName: string;
@@ -40,7 +39,7 @@ const isDropDatePassed = (dropDate: string): boolean => {
   return drop <= today;
 };
 
-const Booking = () => {
+const BookingPage = () => {
   const [open, setOpen] = useState(false);
   const [editBooking, setEditBooking] = useState<Booking | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -49,43 +48,40 @@ const Booking = () => {
   const [statusFilter, setStatusFilter] = useState("booked");
   const [pickupDateFilter, setPickupDateFilter] = useState("");
   const [dropDateFilter, setDropDateFilter] = useState("");
-
-  // ✅ Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const fetchBookings = async () => {
-    const res = await fetch(`${API_URL}/bookings`);
-    const data = await res.json();
-    const fetched: Booking[] = data.data || [];
+ const fetchBookings = async () => {
+  const res = await fetch(`${API_URL}/bookings`);
+  const data = await res.json();
+  const fetched: Booking[] = data.data || [];
 
-    const toAutoComplete = fetched.filter(
-      (b) => b.status === "booked" && isDropDatePassed(b.dropDate)
+  const toAutoComplete = fetched.filter(
+    (b) => b.status === "booked" && b.carId && b.driverId && isDropDatePassed(b.dropDate)
+  );
+
+  if (toAutoComplete.length > 0) {
+    await Promise.all(
+      toAutoComplete.map((b) =>
+        fetch(`${API_URL}/bookings/${b._id}/status`, {  // toggle → status
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "complete" }),
+        })
+      )
     );
-
-    if (toAutoComplete.length > 0) {
-      await Promise.all(
-        toAutoComplete.map((b) =>
-          fetch(`${API_URL}/bookings/${b._id}/toggle`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "complete" }),
-          })
-        )
-      );
-      const res2 = await fetch(`${API_URL}/bookings`);
-      const data2 = await res2.json();
-      setBookings(data2.data || []);
-    } else {
-      setBookings(fetched);
-    }
-  };
+    const res2 = await fetch(`${API_URL}/bookings`);
+    const data2 = await res2.json();
+    setBookings(data2.data || []);
+  } else {
+    setBookings(fetched);
+  }
+};
 
   useEffect(() => {
     fetchBookings();
   }, [refresh]);
 
-  // ✅ Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [search, statusFilter, pickupDateFilter, dropDateFilter]);
@@ -100,11 +96,26 @@ const Booking = () => {
     setRefresh((p) => !p);
   };
 
+  
+
   const handleStatusChange = async (id: string, status: string) => {
     const booking = bookings.find((b) => b._id === id);
+
     if (booking?.status === "complete") {
       toast.error("Completed booking cannot be changed");
       return;
+    }
+
+    // 🔥 complete করতে car ও driver থাকতে হবে
+    if (status === "complete") {
+      if (!booking?.carId) {
+        toast.error("Cannot complete: Car is not assigned ❌");
+        return;
+      }
+      if (!booking?.driverId) {
+        toast.error("Cannot complete: Driver is not assigned ❌");
+        return;
+      }
     }
 
     if (status === "complete" || status === "cancelled") {
@@ -116,24 +127,29 @@ const Booking = () => {
       if (!ok) return;
     }
 
-    const res = await fetch(
-      `${API_URL}/bookings/${id}/toggle`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      }
-    );
+ const res = await fetch(`${API_URL}/bookings/${id}/status`, {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ status }),
+});
 
-    if (!res.ok) return toast.error("Status update failed");
-    toast.success(`Booking marked as ${status}`);
-    setRefresh((p) => !p);
+const data = await res.json();
+
+if (!res.ok) {
+  toast.error(data.message || "Status update failed");
+  return;
+}
+
+toast.success(`Booking marked as ${status}`);
+setRefresh((p) => !p);
   };
 
+
+
+
+
   const filtered = bookings.filter((b) => {
-    const matchStatus = statusFilter
-      ? b.status === statusFilter
-      : b.status !== "complete";
+    const matchStatus = statusFilter ? b.status === statusFilter : true;
 
     const keyword = search.toLowerCase();
     const matchSearch =
@@ -153,12 +169,9 @@ const Booking = () => {
       ? b.dropDate?.slice(0, 10) === dropDateFilter
       : true;
 
-    return (
-      matchStatus && matchSearch && matchPickupDate && matchDropDate
-    );
+    return matchStatus && matchSearch && matchPickupDate && matchDropDate;
   });
 
-  // ✅ Pagination logic
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   const paginatedData = filtered.slice(
@@ -172,220 +185,214 @@ const Booking = () => {
     return "bg-red-100 text-red-600";
   };
 
-  return (
-    <div>
-      {/* HEADER */}
-      <div className="mb-6">
-        {/* <h2 className="text-xl font-bold">Booking Management</h2>
-        <p className="text-sm text-gray-400">
-          Booking ({bookings.filter((b) => b.status === "booked").length})
-        </p> */}
-      </div>
+  
 
-      {/* FILTER BAR */}
-      <div className="bg-white border border-gray-200 rounded-t-xl p-4 flex flex-col md:flex-row gap-3 md:items-center">
-        <div className="flex items-center border border-gray-200 px-3 rounded-lg w-full md:w-[220px] bg-gray-50">
-          <FiSearch />
-          <input
-            placeholder="Search guest..."
-            className="w-full p-2 bg-transparent outline-none"
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+return (
+  <div>
+    {/* FILTER BAR */}
+   <div className="bg-white border border-gray-200 rounded-t-xl p-4 
+  grid grid-cols-2 gap-3 
+  md:flex md:flex-row md:items-center">
 
-        <div className="relative flex items-center">
-          <input
-            type="date"
-            value={pickupDateFilter}
-            onChange={(e) => setPickupDateFilter(e.target.value)}
-            className="border border-gray-200 px-3 py-2 rounded-lg bg-gray-50 pr-8"
-          />
-          {pickupDateFilter && (
-            <button
-              onClick={() => setPickupDateFilter("")}
-              className="absolute right-2 text-xs"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+  {/* SEARCH */}
+  <div className="col-span-2 md:col-span-1 flex items-center border border-gray-200 px-3 rounded-lg w-full md:w-[220px] bg-gray-50">
+    <FiSearch />
+    <input
+      placeholder="Search guest..."
+      className="w-full p-2 bg-transparent outline-none"
+      onChange={(e) => setSearch(e.target.value)}
+    />
+  </div>
 
-        <div className="relative flex items-center">
-          <input
-            type="date"
-            value={dropDateFilter}
-            onChange={(e) => setDropDateFilter(e.target.value)}
-            className="border border-gray-200 px-3 py-2 rounded-lg bg-gray-50 pr-8"
-          />
-          {dropDateFilter && (
-            <button
-              onClick={() => setDropDateFilter("")}
-              className="absolute right-2 text-xs"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+  {/* PICKUP DATE */}
+  <div className="relative flex items-center">
+    <input
+      type="date"
+      value={pickupDateFilter}
+      onChange={(e) => setPickupDateFilter(e.target.value)}
+      className="w-full border border-gray-200 px-3 py-2 rounded-lg bg-gray-50 pr-8"
+    />
+    {pickupDateFilter && (
+      <button
+        onClick={() => setPickupDateFilter("")}
+        className="absolute right-2 text-xs"
+      >
+        ✕
+      </button>
+    )}
+  </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-gray-200 px-3 py-2 rounded-lg bg-gray-50"
-        >
-          <option value="booked">Booked</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+  {/* DROP DATE */}
+  <div className="relative flex items-center">
+    <input
+      type="date"
+      value={dropDateFilter}
+      onChange={(e) => setDropDateFilter(e.target.value)}
+      min={pickupDateFilter || undefined}
+      className="w-full border border-gray-200 px-3 py-2 rounded-lg bg-gray-50 pr-8"
+    />
+    {dropDateFilter && (
+      <button
+        onClick={() => setDropDateFilter("")}
+        className="absolute right-2 text-xs"
+      >
+        ✕
+      </button>
+    )}
+  </div>
 
-        {/* ADD BUTTON RIGHT */}
-        <div className="md:ml-auto">
-          <button
-            onClick={() => {
-              setEditBooking(null);
-              setOpen(true);
-            }}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg flex gap-2 items-center"
-          >
-            <FiPlus /> Add Booking
-          </button>
-        </div>
-      </div>
+  {/* STATUS */}
+  <select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    className="border border-gray-200 px-3 py-2 rounded-lg bg-gray-50 w-full hidden "
+  >
+    <option value="booked">Booked</option>
+    <option value="cancelled">Cancelled</option>
+    <option value="complete">Complete</option>
+  </select>
 
-      {/* TABLE */}
-      <div className="bg-white border border-gray-200 overflow-hidden rounded-b-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[900px]">
-            <thead className="bg-gray-50 text-xs text-left">
+  {/* BUTTON */}
+  <div className="col-span-2 md:ml-auto">
+    <button
+      onClick={() => {
+        setEditBooking(null);
+        setOpen(true);
+      }}
+      className="w-full md:w-auto bg-orange-500 text-white px-4 py-2 rounded-lg flex gap-2 items-center justify-center"
+    >
+      <FiPlus /> Add Booking
+    </button>
+  </div>
+</div>
+
+    {/* TABLE */}
+    <div className="bg-white border border-gray-200 border-t-0">
+
+      {/* ✅ SCROLL ENABLE */}
+      <div className="w-full overflow-x-auto">
+        <table className="min-w-[900px] w-full text-sm">
+
+          <thead className="bg-gray-50 text-xs text-left text-gray-500 sticky top-0 z-10">
+            <tr>
+              <th className="p-3">GUEST</th>
+              <th className="p-3">MOBILE</th>
+              <th className="p-3">CAR NAME</th>
+              <th className="p-3">CAR NUMBER</th>
+              <th className="p-3">DRIVER</th>
+              <th className="p-3">COMPANY</th>
+              <th className="p-3">PICKUP</th>
+              <th className="p-3">DROP</th>
+              <th className="p-3">DATES</th>
+              <th className="p-3">STATUS</th>
+              <th className="p-3">ACTION</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {paginatedData.length === 0 ? (
               <tr>
-                <th className="p-3">GUEST</th>
-                <th className="p-3">MOBILE</th>
-                <th className="p-3">CAR NAME</th>
-                <th className="p-3">CAR NUMBER</th>
-                <th className="p-3">DRIVER</th>
-                <th className="p-3">COMPANY</th>
-                <th className="p-3">PICKUP</th>
-                <th className="p-3">DROP</th>
-                <th className="p-3">DATES</th>
-                <th className="p-3">STATUS</th>
-                <th className="p-3">ACTION</th>
+                <td colSpan={11} className="text-center p-6 text-gray-400">
+                  No bookings found
+                </td>
               </tr>
-            </thead>
+            ) : (
+              paginatedData.map((b) => (
+                <tr
+                  key={b._id}
+                  className="border-t border-gray-200 hover:bg-gray-50"
+                >
+                  <td className="p-3">{b.guestName}</td>
+                  <td className="p-3">{b.guestMobileNo}</td>
+                  <td className="p-3">{b.carId?.carName ?? "N/A"}</td>
+                  <td className="p-3">{b.carId?.carNumber ?? "N/A"}</td>
+                  <td className="p-3">{b.driverId?.driverName ?? "N/A"}</td>
+                  <td className="p-3">{b.company || "—"}</td>
+                  <td className="p-3">{b.pickupLocation}</td>
+                  <td className="p-3">{b.dropLocation}</td>
+                  <td className="p-3 whitespace-nowrap">
+                    {b.pickupDate?.slice(0, 10)} →{" "}
+                    {b.dropDate?.slice(0, 10) ?? "—"}
+                  </td>
 
-            <tbody>
-              {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="text-center p-6 text-gray-400">
-                    No bookings found
+                  <td className="p-3">
+                    <select
+                      value={b.status}
+                      onChange={(e) =>
+                        handleStatusChange(b._id, e.target.value)
+                      }
+                      className={`px-2 py-1 rounded text-xs border-0 outline-none cursor-pointer font-medium ${statusClass(
+                        b.status
+                      )}`}
+                    >
+                      <option value="booked">Booked</option>
+                      <option value="complete">Complete</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </td>
+
+                  <td className="p-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditBooking(b);
+                        setOpen(true);
+                      }}
+                      className="border border-gray-200 p-2 rounded"
+                    >
+                      <MdEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(b._id)}
+                      className="border border-gray-200 p-2 rounded text-red-500"
+                    >
+                      <MdDelete />
+                    </button>
                   </td>
                 </tr>
-              ) : (
-                paginatedData.map((b) => (
-                  <tr
-                    key={b._id}
-                    className="border-t border-gray-200 hover:bg-gray-50"
-                  >
-                    <td className="p-3">{b.guestName}</td>
-                    <td className="p-3">{b.guestMobileNo}</td>
-                    <td className="p-3">{b.carId?.carName ?? "N/A"}</td>
-                    <td className="p-3">{b.carId?.carNumber ?? "N/A"}</td>
-                    <td className="p-3">{b.driverId?.driverName ?? "N/A"}</td>
-                    <td className="p-3">{b.company || "—"}</td>
-                    <td className="p-3">{b.pickupLocation}</td>
-                    <td className="p-3">{b.dropLocation}</td>
-                    <td className="p-3 whitespace-nowrap">
-                      {b.pickupDate?.slice(0, 10)} →{" "}
-                      {b.dropDate?.slice(0, 10) ?? "—"}
-                    </td>
-
-                    <td className="p-3">
-                      <select
-                        value={b.status}
-                        onChange={(e) =>
-                          handleStatusChange(b._id, e.target.value)
-                        }
-                        className={`px-2 py-1 rounded text-xs border-0 outline-none cursor-pointer font-medium ${statusClass(
-                          b.status
-                        )}`}
-                      >
-                        <option value="booked">Booked</option>
-                        <option value="complete">Complete</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                    </td>
-
-                    <td className="p-3 flex gap-2">
-                      <button
-                        onClick={() => {
-                          setEditBooking(b);
-                          setOpen(true);
-                        }}
-                        className="border border-gray-200 p-2 rounded"
-                      >
-                        <MdEdit />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(b._id)}
-                        className="border border-gray-200 p-2 rounded text-red-500"
-                      >
-                        <MdDelete />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* PAGINATION */}
-        <div className="flex justify-between items-center p-4 border-t border-gray-200 text-sm">
-          <p className="text-gray-500">
-            Showing {paginatedData.length} of {filtered.length} bookings
-          </p>
-
-          <div className="flex gap-2 items-center">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-3 py-1 border rounded ${
-                  currentPage === i + 1
-                    ? "bg-orange-500 text-white"
-                    : ""
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-
-      <AddBookingModal
-        open={open}
-        setOpen={setOpen}
-        editBooking={editBooking}
-        setRefresh={setRefresh}
-      />
     </div>
-  );
+
+    {/* PAGINATION */}
+    {totalPages > 1 && (
+      <div className="flex justify-center items-center gap-3 py-4 bg-white border border-t-0 border-gray-200 rounded-b-xl">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        <span className="text-sm">
+          Page {currentPage} of {totalPages}
+        </span>
+
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+    )}
+
+    <AddBookingModal
+      open={open}
+      setOpen={setOpen}
+      editBooking={editBooking}
+      setRefresh={setRefresh}
+    />
+  </div>
+);
+
+
 };
 
-export default Booking;
-
-
+export default BookingPage;
