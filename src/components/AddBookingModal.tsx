@@ -28,16 +28,22 @@ type ApiResponse<T> = {
   data: T;
 };
 
+// ✅ Fix 1: Define BookingStatus
+type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled" | string;
+
 type Booking = {
   _id: string;
+  // ✅ Fix 3 & 4: Add carModel to carId and mobileNo to driverId
   carId: {
     _id: string;
     carNumber: string;
     carName: string;
+    carModel?: string;
   } | null;
   driverId: {
     _id: string;
     driverName: string;
+    mobileNo?: string;
   } | null;
   pickupDate: string;
   dropDate: string;
@@ -76,7 +82,7 @@ type FormErrors = {
   carId?: string;
   driverId?: string;
   pickupDate?: string;
-  dropDate?: string; // ✅ now mandatory → optional string (undefined = no error)
+  dropDate?: string;
   pickupLocation?: string;
   dropLocation?: string;
   guestName?: string;
@@ -134,45 +140,46 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     setDrivers([]);
   };
 
- useEffect(() => {
-  if (editBooking) {
-    setForm({
-      carId:
-        editBooking.carId && typeof editBooking.carId === "object"
-          ? editBooking.carId._id
-          : (editBooking.carId as string) || "",
-      driverId:
-        editBooking.driverId && typeof editBooking.driverId === "object"
-          ? editBooking.driverId._id
-          : (editBooking.driverId as string) || "",
-      pickupDate: editBooking.pickupDate.slice(0, 10),
-      dropDate: editBooking.dropDate ? editBooking.dropDate.slice(0, 10) : "",
-      pickupLocation: editBooking.pickupLocation,
-      dropLocation: editBooking.dropLocation,
-      guestName: editBooking.guestName,
-      guestMobileNo: editBooking.guestMobileNo,
-      company: editBooking.company || "",
-      reportingAddress: editBooking.reportingAddress || "",
-      reportingTime: editBooking.reportingTime || "",
-    });
+  useEffect(() => {
+    if (editBooking) {
+      setForm({
+        // ✅ Fix 2: Cast through unknown to avoid null→string overlap error
+        carId:
+          editBooking.carId && typeof editBooking.carId === "object"
+            ? editBooking.carId._id
+            : (editBooking.carId as unknown as string) || "",
+        driverId:
+          editBooking.driverId && typeof editBooking.driverId === "object"
+            ? editBooking.driverId._id
+            : (editBooking.driverId as unknown as string) || "",
+        pickupDate: editBooking.pickupDate.slice(0, 10),
+        dropDate: editBooking.dropDate ? editBooking.dropDate.slice(0, 10) : "",
+        pickupLocation: editBooking.pickupLocation,
+        dropLocation: editBooking.dropLocation,
+        guestName: editBooking.guestName,
+        guestMobileNo: editBooking.guestMobileNo,
+        company: editBooking.company || "",
+        reportingAddress: editBooking.reportingAddress || "",
+        reportingTime: editBooking.reportingTime || "",
+      });
 
-    if (editBooking.carId && typeof editBooking.carId === "object") {
-      setSelectedCar(
-        `${editBooking.carId.carName} | ${editBooking.carId.carModel ?? ""} | ${editBooking.carId.carNumber}`,
-      );
-    } else {
-      setSelectedCar("");
-    }
+      if (editBooking.carId && typeof editBooking.carId === "object") {
+        setSelectedCar(
+          `${editBooking.carId.carName} | ${editBooking.carId.carModel ?? ""} | ${editBooking.carId.carNumber}`,
+        );
+      } else {
+        setSelectedCar("");
+      }
 
-    if (editBooking.driverId && typeof editBooking.driverId === "object") {
-      setSelectedDriver(
-        `${editBooking.driverId.driverName} (${editBooking.driverId.mobileNo ?? ""})`,
-      );
-    } else {
-      setSelectedDriver("");
+      if (editBooking.driverId && typeof editBooking.driverId === "object") {
+        setSelectedDriver(
+          `${editBooking.driverId.driverName} (${editBooking.driverId.mobileNo ?? ""})`,
+        );
+      } else {
+        setSelectedDriver("");
+      }
     }
-  }
-}, [editBooking]);
+  }, [editBooking]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -227,21 +234,15 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // if (!form.carId) newErrors.carId = "Please select a car";
-    // if (!form.driverId) newErrors.driverId = "Please select a driver";
     if (!form.pickupDate) newErrors.pickupDate = "Pickup date is required";
-
-    // ✅ Drop date is now MANDATORY
     if (!form.dropDate) newErrors.dropDate = "Drop date is required";
 
-    // ✅ Pickup location: required + must have at least one letter
     if (!form.pickupLocation.trim()) {
       newErrors.pickupLocation = "Pickup location is required";
     } else if (!hasAtLeastOneLetter(form.pickupLocation)) {
       newErrors.pickupLocation = "Must contain at least one letter";
     }
 
-    // ✅ Drop location: required + must have at least one letter
     if (!form.dropLocation.trim()) {
       newErrors.dropLocation = "Drop location is required";
     } else if (!hasAtLeastOneLetter(form.dropLocation)) {
@@ -259,39 +260,39 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async () => {
-  if (!validate()) {
-    toast.error("Please fill data");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!validate()) {
+      toast.error("Please fill data");
+      return;
+    }
 
-  try {
-    const url = editBooking
-      ? `${API_URL}/bookings/${editBooking._id}`
-      : `${API_URL}/bookings`;
+    try {
+      const url = editBooking
+        ? `${API_URL}/bookings/${editBooking._id}`
+        : `${API_URL}/bookings`;
 
-    const payload = {
-      ...form,
-      carId: form.carId || null,
-      driverId: form.driverId || null,
-    };
+      const payload = {
+        ...form,
+        carId: form.carId || null,
+        driverId: form.driverId || null,
+      };
 
-    const res = await fetch(url, {
-      method: editBooking ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(url, {
+        method: editBooking ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) return toast.error("Error saving booking");
+      if (!res.ok) return toast.error("Error saving booking");
 
-    toast.success("Booking saved successfully");
-    resetForm();
-    setOpen(false);
-    setRefresh((p) => !p);
-  } catch {
-    toast.error("Server error");
-  }
-};
+      toast.success("Booking saved successfully");
+      resetForm();
+      setOpen(false);
+      setRefresh((p) => !p);
+    } catch {
+      toast.error("Server error");
+    }
+  };
 
   if (!open) return null;
 
@@ -324,7 +325,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
                   setForm((prev) => ({
                     ...prev,
                     pickupDate: date ? date.toISOString().split("T")[0] : "",
-                    dropDate: "", // reset drop when pickup changes
+                    dropDate: "",
                   }));
                   if (errors.pickupDate)
                     setErrors((prev) => ({ ...prev, pickupDate: undefined }));
@@ -341,7 +342,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
             )}
           </div>
 
-          {/* DROP DATE — now MANDATORY */}
+          {/* DROP DATE */}
           <div>
             <div className={`border p-2 rounded-lg ${errClass("dropDate")}`}>
               <DatePicker
@@ -452,7 +453,6 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
               name="pickupLocation"
               value={form.pickupLocation}
               onChange={(e) => {
-                // allow letters, numbers, space, comma, dot, dash
                 const value = e.target.value.replace(/[^a-zA-Z0-9\s,.-]/g, "");
                 setForm((prev) => ({ ...prev, pickupLocation: value }));
                 if (errors.pickupLocation)
@@ -546,7 +546,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
             className="border border-gray-200 p-2 rounded-lg"
           />
 
-          {/* ✅ REPORTING TIME — proper time input with label */}
+          {/* REPORTING TIME */}
           <div className="col-span-2">
             <label className="text-xs text-gray-400 mb-1 block">
               Reporting Time (optional)
