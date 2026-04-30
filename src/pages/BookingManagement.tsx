@@ -45,7 +45,7 @@ const BookingManagement = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [search, setSearch] = useState("");
   const [refresh, setRefresh] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("booked");
+  const [statusFilter] = useState("booked");
   const [pickupDateFilter, setPickupDateFilter] = useState("");
   const [dropDateFilter, setDropDateFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -184,6 +184,16 @@ const BookingManagement = () => {
     return "bg-red-100 text-red-600";
   };
 
+
+  const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
   return (
     <div>
       {/* HEADER */}
@@ -191,7 +201,7 @@ const BookingManagement = () => {
         <div>
           <h2 className="text-xl font-bold">Booking Management</h2>
           <p className="text-sm text-gray-400">
-            Booking ({bookings.filter((b) => b.status === "booked").length})
+           Total Booking ({bookings.filter((b) => b.status === "booked").length})
           </p>
         </div>
 
@@ -258,7 +268,7 @@ const BookingManagement = () => {
 
 
 
-        <select
+        {/* <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="border border-gray-200 px-3 py-2 rounded-lg bg-gray-50"
@@ -266,7 +276,7 @@ const BookingManagement = () => {
           <option value="booked">Booked</option>
           <option value="cancelled">Cancelled</option>
           <option value="complete">Complete</option>
-        </select>
+        </select> */}
       </div>
 
       {/* TABLE */}
@@ -310,10 +320,9 @@ const BookingManagement = () => {
                     <td className="p-3">{b.company || "—"}</td>
                     <td className="p-3">{b.pickupLocation}</td>
                     <td className="p-3">{b.dropLocation}</td>
-                    <td className="p-3 whitespace-nowrap">
-                      {b.pickupDate?.slice(0, 10)} →{" "}
-                      {b.dropDate?.slice(0, 10) ?? "—"}
-                    </td>
+                   <td className="p-3 whitespace-nowrap">
+  {formatDate(b.pickupDate)} → {formatDate(b.dropDate)}
+</td>
 
                     <td className="p-3">
                       <select

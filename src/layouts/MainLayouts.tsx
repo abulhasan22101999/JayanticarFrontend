@@ -9,6 +9,7 @@ const MainLayouts = () => {
 
  return (
   <div className="flex min-h-screen w-full overflow-hidden">
+    {/* <div className="flex h-screen w-full overflow-hidden"> */}
 
     {/* Overlay */}
     {mobileOpen && (
@@ -32,7 +33,8 @@ const MainLayouts = () => {
       <Topbar setMobileOpen={setMobileOpen} />
 
       {/* 🔥 IMPORTANT FIX HERE */}
-      <div className="p-2 md:p-6 bg-gray-50 flex-1 overflow-x-auto overflow-y-auto">
+      {/* <div className="p-2 md:p-6 bg-gray-50 flex-1 overflow-x-auto overflow-y-auto"> */}
+      <div className="p-2 md:p-6 bg-gray-50 flex-1 overflow-hidden">
         <Outlet />
       </div>
 

@@ -9,6 +9,7 @@ type Car = {
   carName: string;
   carModel: string;
   carNumber: string;
+  cartype: string;
   ownership: "self" | "others";
 };
 
@@ -16,6 +17,7 @@ type CarForm = {
   carName: string;
   carModel: string;
   carNumber: string;
+  cartype: string;
   ownership: "self" | "others";
 };
 
@@ -23,6 +25,7 @@ type Errors = {
   carName?: string;
   carModel?: string;
   carNumber?: string;
+  cartype?: string;
 };
 
 type Props = {
@@ -37,6 +40,7 @@ const AddCarModal = ({ open, setOpen, editCar, setRefresh }: Props) => {
     carName: "",
     carModel: "",
     carNumber: "",
+    cartype: "",
     ownership: "self",
   });
 
@@ -48,6 +52,7 @@ const AddCarModal = ({ open, setOpen, editCar, setRefresh }: Props) => {
         carName: editCar.carName || "",
         carModel: editCar.carModel || "",
         carNumber: editCar.carNumber || "",
+        cartype: editCar.cartype || "",
         ownership: editCar.ownership || "self",
       });
     } else {
@@ -55,6 +60,7 @@ const AddCarModal = ({ open, setOpen, editCar, setRefresh }: Props) => {
         carName: "",
         carModel: "",
         carNumber: "",
+        cartype: "",
         ownership: "self",
       });
     }
@@ -208,8 +214,29 @@ const AddCarModal = ({ open, setOpen, editCar, setRefresh }: Props) => {
             )}
           </div>
 
+           <div>
+            <label>Car Type</label>
+            <input
+              name="cartype"
+              value={formData.cartype}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, ""); // 👈 alphanumeric
+                setFormData((prev) => ({ ...prev, cartype: value }));
+                setErrors((prev) => ({ ...prev, cartype: "" }));
+              }}
+              placeholder="Enter car type"
+              className="border border-gray-200 p-2 rounded-lg w-full md:mt-1"
+            />
+            {errors.cartype && (
+              <p className="text-red-500 text-xs mt-1">{errors.cartype}</p>
+            )}
+          </div>
+
           {/* OWNERSHIP */}
-          <div>
+         
+        </div>
+        <div className="py-2 md:px-6 px-3  text-gray-700">
+           <div>
             <label>Ownership</label>
             <select
               name="ownership"

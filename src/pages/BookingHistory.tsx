@@ -36,6 +36,8 @@ type ApiResponse = {
 };
 
 const BookingHistory = () => {
+
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [search, setSearch] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
@@ -66,7 +68,7 @@ const BookingHistory = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, fromDate, toDate]);
+ }, [search, fromDate, toDate, statusFilter]);
 
   const filteredBookings: Booking[] = bookings.filter((b) => {
     const searchText = search.toLowerCase();
@@ -84,7 +86,9 @@ const BookingHistory = () => {
     const matchFrom = fromDate ? bookingDate >= new Date(fromDate) : true;
     const matchTo = toDate ? bookingDate <= new Date(toDate) : true;
 
-    return matchSearch && matchFrom && matchTo;
+    const matchStatus = statusFilter ? b.status === statusFilter : true;
+
+return matchSearch && matchFrom && matchTo && matchStatus;
   });
 
   const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
@@ -137,6 +141,17 @@ const BookingHistory = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+
+
+  const formatDate = (dateStr?: string | null) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
 
   return (
     <div>
@@ -208,6 +223,18 @@ const BookingHistory = () => {
             </button>
           )}
         </div>
+
+        <select
+  value={statusFilter}
+  onChange={(e) => setStatusFilter(e.target.value)}
+  className="border border-gray-200 p-2 rounded-lg bg-white text-sm"
+>
+  <option value="">All Status</option>
+  <option value="pending">Pending</option>
+  <option value="booked">Booked</option>
+  <option value="cancelled">Cancelled</option>
+  <option value="complete">Complete</option>
+</select>
       </div>
 
       {/* TABLE */}
@@ -252,10 +279,9 @@ const BookingHistory = () => {
                     <td className="p-3">{b.pickupLocation}</td>
                     <td className="p-3">{b.dropLocation}</td>
                     <td className="p-3">{b.company || "—"}</td>
-                    <td className="p-3">
-                      {b.pickupDate?.slice(0, 10)} →{" "}
-                      {b.dropDate ? b.dropDate.slice(0, 10) : "—"}
-                    </td>
+                   <td className="p-3">
+  {formatDate(b.pickupDate)} → {formatDate(b.dropDate)}
+</td>
                     <td className="p-3">
   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
     b.status === "complete"

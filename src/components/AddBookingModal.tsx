@@ -14,6 +14,7 @@ type Car = {
   carNumber: string;
   carName: string;
   carModel?: string;
+  cartype?: string;
   status?: string;
 };
 
@@ -28,17 +29,16 @@ type ApiResponse<T> = {
   data: T;
 };
 
-// ✅ Fix 1: Define BookingStatus
-type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled" | string;
+type BookingStatus = "pending" | "booked" | "complete" | "cancelled" | string;
 
 type Booking = {
   _id: string;
-  // ✅ Fix 3 & 4: Add carModel to carId and mobileNo to driverId
   carId: {
     _id: string;
     carNumber: string;
     carName: string;
     carModel?: string;
+    cartype?: string;
   } | null;
   driverId: {
     _id: string;
@@ -79,18 +79,10 @@ type Props = {
 };
 
 type FormErrors = {
-  carId?: string;
-  driverId?: string;
   pickupDate?: string;
   dropDate?: string;
-  pickupLocation?: string;
-  dropLocation?: string;
-  guestName?: string;
   guestMobileNo?: string;
 };
-
-// ✅ Location must contain at least one letter (not only digits/symbols)
-const hasAtLeastOneLetter = (value: string) => /[a-zA-Z]/.test(value);
 
 const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const [form, setForm] = useState<BookingForm>({
@@ -143,7 +135,6 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   useEffect(() => {
     if (editBooking) {
       setForm({
-        // ✅ Fix 2: Cast through unknown to avoid null→string overlap error
         carId:
           editBooking.carId && typeof editBooking.carId === "object"
             ? editBooking.carId._id
@@ -152,12 +143,12 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
           editBooking.driverId && typeof editBooking.driverId === "object"
             ? editBooking.driverId._id
             : (editBooking.driverId as unknown as string) || "",
-        pickupDate: editBooking.pickupDate.slice(0, 10),
+        pickupDate: editBooking.pickupDate?.slice(0, 10) || "",
         dropDate: editBooking.dropDate ? editBooking.dropDate.slice(0, 10) : "",
-        pickupLocation: editBooking.pickupLocation,
-        dropLocation: editBooking.dropLocation,
-        guestName: editBooking.guestName,
-        guestMobileNo: editBooking.guestMobileNo,
+        pickupLocation: editBooking.pickupLocation || "",
+        dropLocation: editBooking.dropLocation || "",
+        guestName: editBooking.guestName || "",
+        guestMobileNo: editBooking.guestMobileNo || "",
         company: editBooking.company || "",
         reportingAddress: editBooking.reportingAddress || "",
         reportingTime: editBooking.reportingTime || "",
@@ -178,21 +169,13 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
       } else {
         setSelectedDriver("");
       }
+    } else {
+      resetForm();
     }
-  }, [editBooking]);
+  }, [editBooking, open]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    if (name === "guestMobileNo") {
-      const digits = value.replace(/\D/g, "").slice(0, 10);
-      setForm((prev) => ({ ...prev, guestMobileNo: digits }));
-      if (errors.guestMobileNo) {
-        setErrors((prev) => ({ ...prev, guestMobileNo: undefined }));
-      }
-      return;
-    }
-
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -231,28 +214,15 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     fetchDrivers();
   }, [driverSearch]);
 
+  // ✅ Only pickupDate & dropDate mandatory
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
     if (!form.pickupDate) newErrors.pickupDate = "Pickup date is required";
     if (!form.dropDate) newErrors.dropDate = "Drop date is required";
 
-    if (!form.pickupLocation.trim()) {
-      newErrors.pickupLocation = "Pickup location is required";
-    } else if (!hasAtLeastOneLetter(form.pickupLocation)) {
-      newErrors.pickupLocation = "Must contain at least one letter";
-    }
-
-    if (!form.dropLocation.trim()) {
-      newErrors.dropLocation = "Drop location is required";
-    } else if (!hasAtLeastOneLetter(form.dropLocation)) {
-      newErrors.dropLocation = "Must contain at least one letter";
-    }
-
-    if (!form.guestName.trim()) newErrors.guestName = "Guest name is required";
-    if (!form.guestMobileNo) {
-      newErrors.guestMobileNo = "Mobile number is required";
-    } else if (form.guestMobileNo.length !== 10) {
+    // Mobile optional — but if filled must be 10 digits
+    if (form.guestMobileNo && form.guestMobileNo.length !== 10) {
       newErrors.guestMobileNo = "Mobile number must be 10 digits";
     }
 
@@ -262,7 +232,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
 
   const handleSubmit = async () => {
     if (!validate()) {
-      toast.error("Please fill data");
+      toast.error("Please check the required fields");
       return;
     }
 
@@ -285,7 +255,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
 
       if (!res.ok) return toast.error("Error saving booking");
 
-      toast.success("Booking saved successfully");
+      toast.success(editBooking ? "Booking updated ✅" : "Booking created ✅");
       resetForm();
       setOpen(false);
       setRefresh((p) => !p);
@@ -299,215 +269,234 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const errClass = (field: keyof FormErrors) =>
     errors[field] ? "border-red-400" : "border-gray-200";
 
+
+
+
+
+
+
+  const getLocalDate = (dateStr: string) => {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4 md:mx-0">
-      <div className="bg-white w-full max-w-lg rounded-xl md:p-6 p-3">
-        <div className="flex justify-between mb-4">
-          <h2 className="font-semibold text-lg">
-            {editBooking ? "Edit Booking" : "Add Booking"}
-          </h2>
-          <FiX
+    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4">
+      <div className="bg-white w-full max-w-lg rounded-xl md:p-6 p-4 max-h-[90vh] overflow-y-auto">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-5">
+          <div>
+            <h2 className="font-semibold text-lg text-gray-800">
+              {editBooking ? "Edit Booking" : "Add Booking"}
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Only pickup & drop date are required
+            </p>
+          </div>
+          <button
             onClick={() => {
               resetForm();
               setOpen(false);
             }}
-            className="cursor-pointer"
-          />
+            className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full p-1.5 transition"
+          >
+            <FiX size={18} />
+          </button>
         </div>
 
-        <div className="grid grid-cols-2 md:gap-3 gap-2">
-          {/* PICKUP DATE */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* ── PICKUP DATE ── */}
           <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Pickup Date <span className="text-red-500">*</span>
+            </label>
             <div className={`border p-2 rounded-lg ${errClass("pickupDate")}`}>
-              <DatePicker
-                selected={form.pickupDate ? new Date(form.pickupDate) : null}
-                onChange={(date: Date | null) => {
-                  setForm((prev) => ({
-                    ...prev,
-                    pickupDate: date ? date.toISOString().split("T")[0] : "",
-                    dropDate: "",
-                  }));
-                  if (errors.pickupDate)
-                    setErrors((prev) => ({ ...prev, pickupDate: undefined }));
-                }}
-                placeholderText="Pickup Date *"
-                minDate={new Date()}
-                dateFormat="yyyy-MM-dd"
-                className="w-full outline-none bg-transparent"
-                popperPlacement="bottom-start"
-              />
+             <DatePicker
+  selected={form.pickupDate ? getLocalDate(form.pickupDate) : null}
+  onChange={(date: Date | null) => {
+    setForm((prev) => ({
+      ...prev,
+      pickupDate: date ? format(date, "yyyy-MM-dd") : "",
+      dropDate: "",
+    }));
+    if (errors.pickupDate)
+      setErrors((prev) => ({ ...prev, pickupDate: undefined }));
+  }}
+  placeholderText="dd/mm/yyyy"
+  minDate={editBooking ? undefined : new Date()}
+  dateFormat="dd/MM/yyyy"
+  className="w-full outline-none bg-transparent text-sm"
+  popperPlacement="bottom-start"
+/>
             </div>
             {errors.pickupDate && (
               <p className="text-red-500 text-xs mt-1">{errors.pickupDate}</p>
             )}
           </div>
 
-          {/* DROP DATE */}
+          {/* ── DROP DATE ── */}
           <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Drop Date <span className="text-red-500">*</span>
+            </label>
             <div className={`border p-2 rounded-lg ${errClass("dropDate")}`}>
               <DatePicker
-                selected={form.dropDate ? new Date(form.dropDate) : null}
-                onChange={(date: Date | null) => {
-                  setForm((prev) => ({
-                    ...prev,
-                    dropDate: date ? format(date, "yyyy-MM-dd") : "",
-                  }));
-                  if (errors.dropDate)
-                    setErrors((prev) => ({ ...prev, dropDate: undefined }));
-                }}
-                placeholderText="Drop Date *"
-                minDate={
-                  form.pickupDate
-                    ? new Date(form.pickupDate + "T00:00:00")
-                    : new Date()
-                }
-                dateFormat="yyyy-MM-dd"
-                className="w-full outline-none bg-transparent"
-                popperPlacement="bottom-start"
-              />
+  selected={form.dropDate ? getLocalDate(form.dropDate) : null}
+  onChange={(date: Date | null) => {
+    setForm((prev) => ({
+      ...prev,
+      dropDate: date ? format(date, "yyyy-MM-dd") : "",
+    }));
+    if (errors.dropDate)
+      setErrors((prev) => ({ ...prev, dropDate: undefined }));
+  }}
+  placeholderText="dd/mm/yyyy"
+  minDate={form.pickupDate ? getLocalDate(form.pickupDate) : new Date()}
+  dateFormat="dd/MM/yyyy"
+  className="w-full outline-none bg-transparent text-sm"
+  popperPlacement="bottom-start"
+/>
             </div>
             {errors.dropDate && (
               <p className="text-red-500 text-xs mt-1">{errors.dropDate}</p>
             )}
           </div>
 
-          {/* CAR SEARCH */}
+          {/* ── CAR SEARCH ── */}
           <div className="col-span-2 relative">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Car
+            </label>
             <input
-              placeholder="Search Car *"
+              placeholder="Search car by name or number..."
               value={selectedCar || carSearch}
               onChange={(e) => {
                 setCarSearch(e.target.value);
                 setSelectedCar("");
                 setForm((prev) => ({ ...prev, carId: "" }));
-                if (errors.carId)
-                  setErrors((prev) => ({ ...prev, carId: undefined }));
               }}
-              className={`border p-2 rounded-lg w-full border-gray-200`}
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
             />
-            {errors.carId && (
-              <p className="text-red-500 text-xs mt-1">{errors.carId}</p>
+            {selectedCar && (
+              <button
+                onClick={() => {
+                  setSelectedCar("");
+                  setCarSearch("");
+                  setForm((prev) => ({ ...prev, carId: "" }));
+                }}
+                className="absolute right-3 top-8 text-gray-400 hover:text-gray-700 text-xs"
+              >
+                ✕
+              </button>
             )}
-
             {cars.length > 0 && !selectedCar && (
-              <div className="absolute bg-white border border-gray-200 w-full mt-1 rounded shadow max-h-40 overflow-auto z-10">
+              <div className="absolute bg-white border border-gray-200 w-full mt-1 rounded-lg shadow-lg max-h-40 overflow-auto z-20">
                 {cars.map((c) => (
                   <div
                     key={c._id}
                     onClick={() => {
                       setForm((prev) => ({ ...prev, carId: c._id }));
                       setSelectedCar(
-                        `${c.carName} | ${c.carModel} | ${c.carNumber}`,
+                        `${c.carName} | ${c.carModel || "N/A"} | ${c.carNumber}`,
                       );
                       setCars([]);
+                      setCarSearch("");
                     }}
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    className={`p-2.5 cursor-pointer text-sm border-b border-gray-100 last:border-0
+                     hover:bg-orange-50 transition`}
                   >
-                    {c.carName} | {c.carModel} | {c.carNumber}
+                    <div className="flex flex-col">
+                      {/* 🔹 Car Name */}
+                      <span className="font-medium text-gray-800">
+                        {c.carName || "Unknown Car"}
+                      </span>
+
+                      {/* 🔹 Details line */}
+                      <span className="text-gray-500 text-xs">
+                        {c.carModel || "N/A"} | {c.carNumber || "N/A"}
+                        {c.cartype && ` | ${c.cartype}`}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* DRIVER SEARCH */}
+          {/* ── DRIVER SEARCH ── */}
           <div className="col-span-2 relative">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Driver
+            </label>
             <input
-              placeholder="Search Driver *"
+              placeholder="Search driver by name or mobile..."
               value={selectedDriver || driverSearch}
               onChange={(e) => {
                 setDriverSearch(e.target.value);
                 setSelectedDriver("");
                 setForm((prev) => ({ ...prev, driverId: "" }));
-                if (errors.driverId)
-                  setErrors((prev) => ({ ...prev, driverId: undefined }));
               }}
-              className={`border p-2 rounded-lg w-full border-gray-200`}
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
             />
-            {errors.driverId && (
-              <p className="text-red-500 text-xs mt-1">{errors.driverId}</p>
+            {selectedDriver && (
+              <button
+                onClick={() => {
+                  setSelectedDriver("");
+                  setDriverSearch("");
+                  setForm((prev) => ({ ...prev, driverId: "" }));
+                }}
+                className="absolute right-3 top-8 text-gray-400 hover:text-gray-700 text-xs"
+              >
+                ✕
+              </button>
             )}
-
             {drivers.length > 0 && !selectedDriver && (
-              <div className="absolute bg-white border border-gray-200 w-full mt-1 rounded shadow max-h-40 overflow-auto z-10">
+              <div className="absolute bg-white border border-gray-200 w-full mt-1 rounded-lg shadow-lg max-h-40 overflow-auto z-20">
                 {drivers.map((d) => (
                   <div
                     key={d._id}
                     onClick={() => {
                       setForm((prev) => ({ ...prev, driverId: d._id }));
-                      setSelectedDriver(`${d.driverName} (${d.mobileNo})`);
+                      setSelectedDriver(
+                        `${d.driverName} (${d.mobileNo ?? ""})`,
+                      );
                       setDrivers([]);
+                      setDriverSearch("");
                     }}
-                    className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    className="p-2.5 hover:bg-orange-50 cursor-pointer text-sm border-b border-gray-100 last:border-0"
                   >
-                    {d.driverName} ({d.mobileNo})
+                    <span className="font-medium">{d.driverName}</span>
+                    {d.mobileNo && (
+                      <span className="text-gray-400"> ({d.mobileNo})</span>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* PICKUP LOCATION */}
+          {/* ── GUEST NAME ── */}
           <div>
-            <input
-              name="pickupLocation"
-              value={form.pickupLocation}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^a-zA-Z0-9\s,.-]/g, "");
-                setForm((prev) => ({ ...prev, pickupLocation: value }));
-                if (errors.pickupLocation)
-                  setErrors((prev) => ({ ...prev, pickupLocation: undefined }));
-              }}
-              placeholder="Pickup Location *"
-              className={`border p-2 rounded-lg w-full ${errClass("pickupLocation")}`}
-            />
-            {errors.pickupLocation && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.pickupLocation}
-              </p>
-            )}
-          </div>
-
-          {/* DROP LOCATION */}
-          <div>
-            <input
-              name="dropLocation"
-              value={form.dropLocation}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^a-zA-Z0-9\s,.-]/g, "");
-                setForm((prev) => ({ ...prev, dropLocation: value }));
-                if (errors.dropLocation)
-                  setErrors((prev) => ({ ...prev, dropLocation: undefined }));
-              }}
-              placeholder="Drop Location *"
-              className={`border p-2 rounded-lg w-full ${errClass("dropLocation")}`}
-            />
-            {errors.dropLocation && (
-              <p className="text-red-500 text-xs mt-1">{errors.dropLocation}</p>
-            )}
-          </div>
-
-          {/* GUEST NAME */}
-          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Guest Name
+            </label>
             <input
               name="guestName"
               value={form.guestName}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
                 setForm((prev) => ({ ...prev, guestName: value }));
-                if (errors.guestName)
-                  setErrors((prev) => ({ ...prev, guestName: undefined }));
               }}
-              placeholder="Guest Name *"
-              className={`border p-2 rounded-lg w-full ${errClass("guestName")}`}
+              placeholder="Guest name"
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
             />
-            {errors.guestName && (
-              <p className="text-red-500 text-xs mt-1">{errors.guestName}</p>
-            )}
           </div>
 
-          {/* MOBILE */}
+          {/* ── MOBILE ── */}
           <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Mobile No.
+            </label>
             <input
               name="guestMobileNo"
               value={form.guestMobileNo}
@@ -517,9 +506,9 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
                 if (errors.guestMobileNo)
                   setErrors((prev) => ({ ...prev, guestMobileNo: undefined }));
               }}
-              placeholder="Mobile *"
+              placeholder="10-digit mobile"
               inputMode="numeric"
-              className={`border p-2 rounded-lg w-full ${errClass("guestMobileNo")}`}
+              className={`border p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300 ${errClass("guestMobileNo")}`}
             />
             {errors.guestMobileNo && (
               <p className="text-red-500 text-xs mt-1">
@@ -528,54 +517,121 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
             )}
           </div>
 
-          {/* COMPANY */}
-          <input
-            name="company"
-            value={form.company}
-            onChange={handleChange}
-            placeholder="Company (optional)"
-            className="border border-gray-200 p-2 rounded-lg"
-          />
-
-          {/* REPORTING ADDRESS */}
-          <input
-            name="reportingAddress"
-            value={form.reportingAddress}
-            onChange={handleChange}
-            placeholder="Reporting Address (optional)"
-            className="border border-gray-200 p-2 rounded-lg"
-          />
-
-          {/* REPORTING TIME */}
-          <div className="col-span-2">
-            <label className="text-xs text-gray-400 mb-1 block">
-              Reporting Time (optional)
+          {/* ── PICKUP LOCATION ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Pickup Location
             </label>
             <input
-              type="time"
-              name="reportingTime"
-              value={form.reportingTime}
-              onChange={handleChange}
-              className="border border-gray-200 p-2 rounded-lg w-full"
+              name="pickupLocation"
+              value={form.pickupLocation}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z0-9\s,.-]/g, "");
+                setForm((prev) => ({ ...prev, pickupLocation: value }));
+              }}
+              placeholder="Pickup location"
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
             />
           </div>
+
+          {/* ── DROP LOCATION ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Drop Location
+            </label>
+            <input
+              name="dropLocation"
+              value={form.dropLocation}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^a-zA-Z0-9\s,.-]/g, "");
+                setForm((prev) => ({ ...prev, dropLocation: value }));
+              }}
+              placeholder="Drop location"
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+            />
+          </div>
+
+          {/* ── COMPANY ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Company
+            </label>
+            <input
+              name="company"
+              value={form.company}
+              onChange={handleChange}
+              placeholder="Company name"
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+            />
+          </div>
+
+          {/* ── REPORTING ADDRESS ── */}
+
+           <div >
+  <label className="text-xs text-gray-500 mb-1 block font-medium">
+    Reporting Time
+  </label>
+
+  <div className="flex gap-2">
+    {/* TIME INPUT */}
+    <input
+      type="time"
+      value={form.reportingTime}
+      onChange={(e) =>
+        setForm((prev) => ({
+          ...prev,
+          reportingTime: e.target.value,
+        }))
+      }
+      className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+    />
+
+    {/* AM / PM DISPLAY */}
+   
+  </div>
+        </div>
+         
+         <div className="col-span-2">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Service Description
+            </label>
+            <input
+              name="reportingAddress"
+              value={form.reportingAddress}
+              onChange={handleChange}
+              placeholder="Service description"
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+            />
+          </div>
+
         </div>
 
-        <div className="flex justify-end gap-3 py-4 px-6">
+        {/* ── STATUS NOTE ── */}
+        {/* <div className="mt-4 px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-xs text-yellow-700">
+            <span className="font-semibold">Note:</span> Booking will be{" "}
+            <span className="font-semibold">Pending</span> until car, driver,
+            guest name, mobile & locations are all filled.
+          </p>
+        </div> */}
+
+        {/* ── ACTIONS ── */}
+        <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => {
               resetForm();
               setOpen(false);
             }}
-            className="border border-gray-200 px-4 py-2 rounded-lg bg-gray-50 text-gray-700"
+            className="border border-gray-200 px-4 py-2 rounded-lg bg-gray-50 text-gray-700 text-sm hover:bg-gray-100 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm transition"
           >
-            <MdSave size={18} /> Save
+            <MdSave size={16} />
+            {editBooking ? "Update" : "Save"}
           </button>
         </div>
       </div>

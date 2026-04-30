@@ -106,11 +106,12 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="px-2 md:p-4 space-y-4">
+      {/* <div className="px-2 md:p-4 space-y-4"> */}
+      <div className="px-2 md:p-4 h-full flex flex-col gap-4 overflow-hidden">
         {/* GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
           {/* TODAY BOOKINGS */}
-          <div className="col-span-2 md:col-span-1 group relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 rounded-2xl shadow-md hover:shadow-xl transition">
+          {/* <div className="col-span-2 md:col-span-1 group relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 rounded-2xl shadow-md hover:shadow-xl transition">
             <div className="flex justify-between items-center mb-4">
               <div className="bg-white/20 p-2 rounded-xl">📅</div>
               <span className="bg-white/20 text-xs px-3 py-1 rounded-full">
@@ -122,68 +123,82 @@ const Dashboard = () => {
             <p className="text-sm mt-1 opacity-90">Today's Bookings</p>
 
             <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition"></div>
-          </div>
+          </div> */}
 
           {/* AVAILABLE CARS */}
-          <Link to="/availablecar">
-            <div className="bg-white border border-gray-200 p-5 rounded-2xl hover:shadow-lg transition">
-              <div className="mb-4">
-                <div className="bg-green-100 text-green-600 p-3 rounded-xl w-fit">
-                  <MdDirectionsCar size={20} />
-                </div>
-              </div>
+         <Link to="/availablecar">
+  <div className="bg-white border border-gray-200 px-6 py-2 rounded-2xl hover:shadow-lg transition">
+    <div className="mb-2 flex justify-between items-start">
+      <div className="bg-green-100 text-green-600 p-2 rounded-xl w-fit">
+        <MdDirectionsCar size={20} />
+      </div>
 
-              <h1 className="text-3xl font-bold">{stats.availableCars}</h1>
-              <p className="text-gray-500 text-sm">Available Cars</p>
-            </div>
-          </Link>
+      <p className="text-xs bg-green-100 text-green-600 px-3 py-1 rounded-full font-medium">
+        Available Cars
+      </p>
+    </div>
 
-          {/* BOOKED CARS */}
-          <Link to="/bookedcar">
-            <div className="bg-white border border-gray-200 p-5 rounded-2xl hover:shadow-lg transition">
-              <div className="mb-4">
-                <div className="bg-red-100 text-red-600 p-3 rounded-xl w-fit">
-                  <MdEventBusy size={20} />
-                </div>
-              </div>
+    <h1 className="text-3xl font-bold">{stats.availableCars}</h1>
+  </div>
+</Link>
 
-              <h1 className="text-3xl font-bold">{stats.bookedCars}</h1>
-              <p className="text-gray-500 text-sm">Booked Cars</p>
-            </div>
-          </Link>
+{/* BOOKED CARS */}
+<Link to="/bookedcar">
+  <div className="bg-white border border-gray-200 px-6 py-2 rounded-2xl hover:shadow-lg transition">
+    <div className="mb-2 flex justify-between items-start">
+      <div className="bg-red-100 text-red-600 p-2 rounded-xl w-fit">
+        <MdEventBusy size={20} />
+      </div>
 
-          {/* AVAILABLE DRIVERS */}
-          <Link to="/availabledriver">
-            <div className="bg-white border border-gray-200 p-5 rounded-2xl hover:shadow-lg transition">
-              <div className="mb-4">
-                <div className="bg-blue-100 text-blue-600 p-3 rounded-xl w-fit">
-                  <FaUserTie size={18} />
-                </div>
-              </div>
+      <p className="text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-medium">
+        Booked Cars
+      </p>
+    </div>
 
-              <h1 className="text-3xl font-bold">{stats.availableDrivers}</h1>
-              <p className="text-gray-500 text-sm">Available Drivers</p>
-            </div>
-          </Link>
+    <h1 className="text-3xl font-bold">{stats.bookedCars}</h1>
+  </div>
+</Link>
 
-          {/* BOOKED DRIVERS */}
-          <Link to="/bookeddriver">
-            <div className="bg-white border border-gray-200 p-5 rounded-2xl hover:shadow-lg transition">
-              <div className="mb-4">
-                <div className="bg-red-100 text-red-600 p-3 rounded-xl w-fit">
-                  <MdEventBusy size={20} />
-                </div>
-              </div>
+{/* AVAILABLE DRIVERS */}
+<Link to="/availabledriver">
+  <div className="bg-white border border-gray-200 px-6 py-2 rounded-2xl hover:shadow-lg transition">
+    <div className="mb-2 flex justify-between items-start">
+      <div className="bg-blue-100 text-blue-600 p-2 rounded-xl w-fit">
+        <FaUserTie size={18} />
+      </div>
 
-              <h1 className="text-3xl font-bold">{stats.bookedDrivers}</h1>
-              <p className="text-gray-500 text-sm">Booked Drivers</p>
-            </div>
-          </Link>
+      <p className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-medium">
+        Available Drivers
+      </p>
+    </div>
+
+    <h1 className="text-3xl font-bold">{stats.availableDrivers}</h1>
+  </div>
+</Link>
+
+{/* BOOKED DRIVERS */}
+<Link to="/bookeddriver">
+  <div className="bg-white border border-gray-200 px-6 py-2 rounded-2xl hover:shadow-lg transition">
+    <div className="mb-2 flex justify-between items-start">
+      <div className="bg-red-100 text-red-600 p-2 rounded-xl w-fit">
+        <MdEventBusy size={20} />
+      </div>
+
+      <p className="text-xs bg-red-100 text-red-600 px-3 py-1 rounded-full font-medium">
+        Booked Drivers
+      </p>
+    </div>
+
+    <h1 className="text-3xl font-bold">{stats.bookedDrivers}</h1>
+  </div>
+</Link>
+
+
         </div>
 
         {/* ✅ BOOKING SECTION FIX */}
-        <div className="w-full h-full">
-  <Booking />
+<div className="w-full flex-1 overflow-hidden">
+   <Booking />
 </div>
       </div>
     </>

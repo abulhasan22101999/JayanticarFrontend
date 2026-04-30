@@ -12,6 +12,7 @@ type Car = {
   carName: string;
   carModel: string;
   carNumber: string;
+  cartype: string;
   ownership: "self" | "others";
   status: CarStatus;
 };
@@ -86,6 +87,7 @@ const CarManagement = () => {
       car.carNumber?.toLowerCase().includes(keyword) ||
       car.carName?.toLowerCase().includes(keyword) ||
       car.carModel?.toLowerCase().includes(keyword) ||
+      car.cartype?.toLowerCase().includes(keyword) ||
       car.ownership?.toLowerCase().includes(keyword)
     );
   });
@@ -205,6 +207,7 @@ const CarManagement = () => {
                 <th className="p-4 text-left">CAR NAME</th>
                 <th className="p-4 text-left">CAR MODEL</th>
                 <th className="p-4 text-left">CAR NUMBER</th>
+                <th className="p-4 text-left">CAR TYPE</th>
                 <th className="p-4 text-left">OWNERSHIP</th>
                 <th className="p-4 text-left">STATUS</th>
                 <th className="p-4 text-left">ACTIONS</th>
@@ -220,35 +223,40 @@ const CarManagement = () => {
                   <td className="p-3">{car.carName}</td>
                   <td className="p-3">{car.carModel}</td>
                   <td className="p-3">{car.carNumber}</td>
-
+                  <td className="p-3">{car.cartype}</td>
                   <td className="p-3 capitalize">{car.ownership}</td>
 
                   {/* STATUS (NO DESIGN CHANGE) */}
-                 <td className="p-3">
-  {car.status === "booked" ? (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-gray-200">
-      blocked
-    </span>
-  ) : (
-    <div className="relative inline-flex items-center">
-      <select
-        value={car.status}
-        onChange={(e) =>
-          handleCarStatusChange(car._id, e.target.value as CarStatus)
-        }
-        className={`pl-2 pr-4 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer appearance-none ${
-          car.status === "active"
-            ? "bg-green-100 text-green-600"
-            : "bg-gray-200 text-gray-600"
-        }`}
-      >
-        <option value="active">active</option>
-        <option value="inactive">inactive</option>
-      </select>
-      <span className="pointer-events-none absolute right-2 text-[14px]">▾</span>
-    </div>
-  )}
-</td>
+                  <td className="p-3">
+                    {car.status === "booked" ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-gray-200">
+                        blocked
+                      </span>
+                    ) : (
+                      <div className="relative inline-flex items-center">
+                        <select
+                          value={car.status}
+                          onChange={(e) =>
+                            handleCarStatusChange(
+                              car._id,
+                              e.target.value as CarStatus,
+                            )
+                          }
+                          className={`pl-2 pr-4 py-1 rounded-full text-xs font-medium border border-gray-200 outline-none cursor-pointer appearance-none ${
+                            car.status === "active"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
+                        >
+                          <option value="active">active</option>
+                          <option value="inactive">inactive</option>
+                        </select>
+                        <span className="pointer-events-none absolute right-2 text-[14px]">
+                          ▾
+                        </span>
+                      </div>
+                    )}
+                  </td>
                   <td className="p-3 flex gap-2">
                     <button
                       onClick={() => {
