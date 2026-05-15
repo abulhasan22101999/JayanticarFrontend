@@ -84,6 +84,8 @@ type FormErrors = {
   guestMobileNo?: string;
 };
 
+
+
 const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const [form, setForm] = useState<BookingForm>({
     carId: "",
@@ -104,6 +106,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const [carSearch, setCarSearch] = useState("");
   const [cars, setCars] = useState<Car[]>([]);
   const [selectedCar, setSelectedCar] = useState("");
+  const [selectedCarType, setSelectedCarType] = useState(""); // ✅ NEW
 
   const [driverSearch, setDriverSearch] = useState("");
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -128,6 +131,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     setDriverSearch("");
     setSelectedCar("");
     setSelectedDriver("");
+    setSelectedCarType(""); // ✅ reset type
     setCars([]);
     setDrivers([]);
   };
@@ -158,8 +162,11 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
         setSelectedCar(
           `${editBooking.carId.carName} | ${editBooking.carId.carModel ?? ""} | ${editBooking.carId.carNumber}`,
         );
+        // ✅ Pre-fill type from existing booking car
+        setSelectedCarType(editBooking.carId.cartype || "");
       } else {
         setSelectedCar("");
+        setSelectedCarType("");
       }
 
       if (editBooking.driverId && typeof editBooking.driverId === "object") {
@@ -182,21 +189,21 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
     }
   };
 
-  // ✅ CAR SEARCH
+  // CAR SEARCH — type alone shows filtered cars; search narrows further
   useEffect(() => {
-    if (!carSearch) {
-      setCars([]);
-      return;
-    }
-    const fetchCars = async () => {
-      const res = await fetch(
-        `${API_URL}/cars/search?q=${carSearch}&status=active`,
-      );
+    if (selectedCar) { setCars([]); return; }
+    // Need at least one: carSearch OR selectedCarType
+    if (!carSearch && !selectedCarType.trim()) { setCars([]); return; }
+    const timer = setTimeout(async () => {
+      let url = `${API_URL}/cars/search?status=active`;
+      if (carSearch) url += `&q=${carSearch}`;
+      if (selectedCarType.trim()) url += `&cartype=${encodeURIComponent(selectedCarType.trim())}`;
+      const res = await fetch(url);
       const data: ApiResponse<Car[]> = await res.json();
       setCars(data.data.filter((c) => c.status === "active"));
-    };
-    fetchCars();
-  }, [carSearch]);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [carSearch, selectedCarType, selectedCar]);
 
   // ✅ DRIVER SEARCH
   useEffect(() => {
@@ -269,16 +276,10 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
   const errClass = (field: keyof FormErrors) =>
     errors[field] ? "border-red-400" : "border-gray-200";
 
-
-
-
-
-
-
   const getLocalDate = (dateStr: string) => {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4">
@@ -311,23 +312,23 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
               Pickup Date <span className="text-red-500">*</span>
             </label>
             <div className={`border p-2 rounded-lg ${errClass("pickupDate")}`}>
-             <DatePicker
-  selected={form.pickupDate ? getLocalDate(form.pickupDate) : null}
-  onChange={(date: Date | null) => {
-    setForm((prev) => ({
-      ...prev,
-      pickupDate: date ? format(date, "yyyy-MM-dd") : "",
-      dropDate: "",
-    }));
-    if (errors.pickupDate)
-      setErrors((prev) => ({ ...prev, pickupDate: undefined }));
-  }}
-  placeholderText="dd/mm/yyyy"
-  minDate={editBooking ? undefined : new Date()}
-  dateFormat="dd/MM/yyyy"
-  className="w-full outline-none bg-transparent text-sm"
-  popperPlacement="bottom-start"
-/>
+              <DatePicker
+                selected={form.pickupDate ? getLocalDate(form.pickupDate) : null}
+                onChange={(date: Date | null) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    pickupDate: date ? format(date, "yyyy-MM-dd") : "",
+                    dropDate: "",
+                  }));
+                  if (errors.pickupDate)
+                    setErrors((prev) => ({ ...prev, pickupDate: undefined }));
+                }}
+                placeholderText="dd/mm/yyyy"
+                minDate={editBooking ? undefined : new Date()}
+                dateFormat="dd/MM/yyyy"
+                className="w-full outline-none bg-transparent text-sm"
+                popperPlacement="bottom-start"
+              />
             </div>
             {errors.pickupDate && (
               <p className="text-red-500 text-xs mt-1">{errors.pickupDate}</p>
@@ -341,25 +342,45 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
             </label>
             <div className={`border p-2 rounded-lg ${errClass("dropDate")}`}>
               <DatePicker
-  selected={form.dropDate ? getLocalDate(form.dropDate) : null}
-  onChange={(date: Date | null) => {
-    setForm((prev) => ({
-      ...prev,
-      dropDate: date ? format(date, "yyyy-MM-dd") : "",
-    }));
-    if (errors.dropDate)
-      setErrors((prev) => ({ ...prev, dropDate: undefined }));
-  }}
-  placeholderText="dd/mm/yyyy"
-  minDate={form.pickupDate ? getLocalDate(form.pickupDate) : new Date()}
-  dateFormat="dd/MM/yyyy"
-  className="w-full outline-none bg-transparent text-sm"
-  popperPlacement="bottom-start"
-/>
+                selected={form.dropDate ? getLocalDate(form.dropDate) : null}
+                onChange={(date: Date | null) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    dropDate: date ? format(date, "yyyy-MM-dd") : "",
+                  }));
+                  if (errors.dropDate)
+                    setErrors((prev) => ({ ...prev, dropDate: undefined }));
+                }}
+                placeholderText="dd/mm/yyyy"
+                minDate={form.pickupDate ? getLocalDate(form.pickupDate) : new Date()}
+                dateFormat="dd/MM/yyyy"
+                className="w-full outline-none bg-transparent text-sm"
+                popperPlacement="bottom-start"
+              />
             </div>
             {errors.dropDate && (
               <p className="text-red-500 text-xs mt-1">{errors.dropDate}</p>
             )}
+          </div>
+
+          {/* ── CAR TYPE INPUT ── ✅ NEW FIELD */}
+          <div className="col-span-2">
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Car Type
+            </label>
+            <input
+              placeholder="e.g. SUV, Sedan, Van..."
+              value={selectedCarType}
+              onChange={(e) => {
+                setSelectedCarType(e.target.value);
+                // Clear previously selected car when type changes
+                setSelectedCar("");
+                setCarSearch("");
+                setForm((prev) => ({ ...prev, carId: "" }));
+                setCars([]);
+              }}
+              className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+            />
           </div>
 
           {/* ── CAR SEARCH ── */}
@@ -368,7 +389,11 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
               Car
             </label>
             <input
-              placeholder="Search car by name or number..."
+              placeholder={
+                selectedCarType
+                  ? `Search ${selectedCarType} cars...`
+                  : "Search car by name or number..."
+              }
               value={selectedCar || carSearch}
               onChange={(e) => {
                 setCarSearch(e.target.value);
@@ -565,33 +590,28 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
             />
           </div>
 
-          {/* ── REPORTING ADDRESS ── */}
+          {/* ── REPORTING TIME ── */}
+          <div>
+            <label className="text-xs text-gray-500 mb-1 block font-medium">
+              Reporting Time
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="time"
+                value={form.reportingTime}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    reportingTime: e.target.value,
+                  }))
+                }
+                className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
+              />
+            </div>
+          </div>
 
-           <div >
-  <label className="text-xs text-gray-500 mb-1 block font-medium">
-    Reporting Time
-  </label>
-
-  <div className="flex gap-2">
-    {/* TIME INPUT */}
-    <input
-      type="time"
-      value={form.reportingTime}
-      onChange={(e) =>
-        setForm((prev) => ({
-          ...prev,
-          reportingTime: e.target.value,
-        }))
-      }
-      className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
-    />
-
-    {/* AM / PM DISPLAY */}
-   
-  </div>
-        </div>
-         
-         <div className="col-span-2">
+          {/* ── SERVICE DESCRIPTION ── */}
+          <div className="col-span-2">
             <label className="text-xs text-gray-500 mb-1 block font-medium">
               Service Description
             </label>
@@ -603,17 +623,7 @@ const AddBookingModal = ({ open, setOpen, editBooking, setRefresh }: Props) => {
               className="border border-gray-200 p-2 rounded-lg w-full text-sm outline-none focus:border-orange-300"
             />
           </div>
-
         </div>
-
-        {/* ── STATUS NOTE ── */}
-        {/* <div className="mt-4 px-3 py-2.5 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-xs text-yellow-700">
-            <span className="font-semibold">Note:</span> Booking will be{" "}
-            <span className="font-semibold">Pending</span> until car, driver,
-            guest name, mobile & locations are all filled.
-          </p>
-        </div> */}
 
         {/* ── ACTIONS ── */}
         <div className="flex justify-end gap-3 pt-4">

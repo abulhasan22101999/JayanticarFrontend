@@ -167,7 +167,7 @@ const Dashboard = () => {
         <FaUserTie size={18} />
       </div>
 
-      <p className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-medium">
+      <p className="text-xs bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-medium ml-2 md:ml-0">
         Available Drivers
       </p>
     </div>

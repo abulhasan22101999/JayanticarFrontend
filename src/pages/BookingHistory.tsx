@@ -43,7 +43,7 @@ const BookingHistory = () => {
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
   const fetchBookings = async (): Promise<void> => {
     try {

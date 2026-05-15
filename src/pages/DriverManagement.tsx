@@ -23,7 +23,7 @@ const DriverManagement = () => {
   const [editDriver, setEditDriver] = useState<Driver | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   // ✅ Fetch
   const fetchDrivers = async () => {

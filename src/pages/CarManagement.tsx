@@ -26,7 +26,7 @@ const CarManagement = () => {
   const [refresh, setRefresh] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8;
 
   // ✅ Fetch Cars
   const fetchCars = async () => {
